@@ -4,7 +4,7 @@
 #define MAX_SEQUENCE 5
 #define SEQUENCE_INTERVAL 500
 #define SEQUENCE_PAUSE 250
-#define LED_1 11
+#define LED_1 10
 
 // Debounced button
 struct Button {
@@ -16,10 +16,10 @@ struct Button {
    const unsigned long debounceDelay = 50;
 
    Button(int _pin)
-       : pin(_pin), state(LOW), lastState(LOW), justPressed(false),
+       : pin(_pin), state(HIGH), lastState(HIGH), justPressed(false),
          lastDebounceTime(0) {};
 
-   void init() { pinMode(pin, INPUT); };
+   void init() { pinMode(pin, INPUT_PULLUP); };
 
    void update() {
       justPressed = false;
@@ -31,7 +31,7 @@ struct Button {
 
       if ((millis() - lastDebounceTime) > debounceDelay) {
          if (reading != state) {
-            if (state == LOW && reading == HIGH) {
+            if (state == HIGH && reading == LOW) {
                justPressed = true;
             }
             state = reading;
@@ -104,12 +104,12 @@ int sequence[MAX_SEQUENCE];
 int sequenceIndex = 0;
 int playerSequence[MAX_SEQUENCE];
 Button buttons[] = {Button(5), Button(6), Button(7)};
-int leds[] = {11, 12, 13};
+int leds[] = {LED_1, LED_1 + 1, LED_1 + 2};
 
 AnimationFrame waitingFrames[] = {
-        {{HIGH, LOW, LOW}, 500},
-        {{LOW, HIGH, LOW}, 500},
-        {{LOW, LOW, HIGH}, 500},
+        {{HIGH, LOW, LOW}, 250},
+        {{LOW, HIGH, LOW}, 250},
+        {{LOW, LOW, HIGH}, 250},
         {{0}, -1},
 };
 Animation waitingAnimation(waitingFrames);
@@ -161,7 +161,7 @@ void waitForNoButtonsPressed() {
       bool somePressed = false;
       for (int i = 0; i < NUM_ELEMENTS; i++) {
          buttons[i].update();
-         somePressed |= buttons[i].state == HIGH;
+         somePressed |= buttons[i].state == LOW;
       }
       if (!somePressed) {
          break;
@@ -202,7 +202,7 @@ void readSequence() {
    while (!done) {
       for (int i = 0; i < NUM_ELEMENTS; i++) {
          buttons[i].update();
-         digitalWrite(leds[i], buttons[i].state);
+         digitalWrite(leds[i], !buttons[i].state);
 
          if (buttons[i].justPressed) {
             playerSequence[playerSequenceIndex] = i;
