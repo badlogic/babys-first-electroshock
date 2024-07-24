@@ -1,19 +1,10 @@
 #include <Arduino.h>
 
 #define NUM_ELEMENTS 3
-
-#define LED_1 11
-#define LED_2 12
-#define LED_3 13
-
-#define BUTTON_1 5
-#define BUTTON_2 6
-#define BUTTON_3 7
-#define BUTTON_DEBOUNCE_TIME 50
-
 #define MAX_SEQUENCE 5
 #define SEQUENCE_INTERVAL 500
 #define SEQUENCE_PAUSE 250
+#define LED_1 11
 
 // Debounced button
 struct Button {
@@ -112,8 +103,8 @@ GameState gameState = MainMenu;
 int sequence[MAX_SEQUENCE];
 int sequenceIndex = 0;
 int playerSequence[MAX_SEQUENCE];
-Button buttons[] = {Button(BUTTON_1), Button(BUTTON_2), Button(BUTTON_3)};
-int leds[] = {LED_1, LED_2, LED_3};
+Button buttons[] = {Button(5), Button(6), Button(7)};
+int leds[] = {11, 12, 13};
 
 AnimationFrame waitingFrames[] = {
 		{{HIGH, LOW, LOW}, 500},
