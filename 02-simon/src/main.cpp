@@ -8,95 +8,95 @@
 
 // Debounced button
 struct Button {
-	int pin;
-	int state;
-	int lastState;
-	bool justPressed;
-	unsigned long lastDebounceTime;
-	const unsigned long debounceDelay = 50;
+   int pin;
+   int state;
+   int lastState;
+   bool justPressed;
+   unsigned long lastDebounceTime;
+   const unsigned long debounceDelay = 50;
 
-	Button(int _pin)
-		: pin(_pin), state(LOW), lastState(LOW), justPressed(false),
-			lastDebounceTime(0) {};
+   Button(int _pin)
+       : pin(_pin), state(LOW), lastState(LOW), justPressed(false),
+         lastDebounceTime(0) {};
 
-	void init() { pinMode(pin, INPUT); };
+   void init() { pinMode(pin, INPUT); };
 
-	void update() {
-		justPressed = false;
-		int reading = digitalRead(pin);
+   void update() {
+      justPressed = false;
+      int reading = digitalRead(pin);
 
-		if (reading != lastState) {
-			lastDebounceTime = millis();
-		}
+      if (reading != lastState) {
+         lastDebounceTime = millis();
+      }
 
-		if ((millis() - lastDebounceTime) > debounceDelay) {
-			if (reading != state) {
-				if (state == LOW && reading == HIGH) {
-					justPressed = true;
-				}
-				state = reading;
-			}
-		}
+      if ((millis() - lastDebounceTime) > debounceDelay) {
+         if (reading != state) {
+            if (state == LOW && reading == HIGH) {
+               justPressed = true;
+            }
+            state = reading;
+         }
+      }
 
-		lastState = reading;
-	};
+      lastState = reading;
+   };
 };
 
 // LED animation frame
 struct AnimationFrame {
-	int ledStates[NUM_ELEMENTS];
-	int duration;
+   int ledStates[NUM_ELEMENTS];
+   int duration;
 };
 
 // LED Animation consisting of multiple frames
 struct Animation {
-	unsigned long lastTime;
-	int frameIndex;
-	AnimationFrame *frames;
-	int numFrames;
-	int duration;
+   unsigned long lastTime;
+   int frameIndex;
+   AnimationFrame *frames;
+   int numFrames;
+   int duration;
 
-	Animation(AnimationFrame *_frames)
-		: lastTime(-1), frameIndex(0), frames(_frames) {
-		while (true) {
-			AnimationFrame *frame = &frames[numFrames];
-			if (frame->duration == -1)
-				break;
-			numFrames++;
-			duration += frame->duration;
-		}
-	}
+   Animation(AnimationFrame *_frames)
+       : lastTime(-1), frameIndex(0), frames(_frames) {
+      while (true) {
+         AnimationFrame *frame = &frames[numFrames];
+         if (frame->duration == -1)
+            break;
+         numFrames++;
+         duration += frame->duration;
+      }
+   }
 
-	void reset() {
-		lastTime = -1;
-		frameIndex = 0;
-	}
+   void reset() {
+      lastTime = -1;
+      frameIndex = 0;
+   }
 
-	void update() {
-		if (lastTime == -1) {
-			lastTime = millis();
-			for (int i = 0; i < NUM_ELEMENTS; i++) {
-				digitalWrite(i + LED_1, frames[frameIndex].ledStates[i]);
-			}
-			return;
-		}
+   void update() {
+      if (lastTime == -1) {
+         lastTime = millis();
+         for (int i = 0; i < NUM_ELEMENTS; i++) {
+            digitalWrite(i + LED_1, frames[frameIndex].ledStates[i]);
+         }
+         return;
+      }
 
-		unsigned long currentTime = millis();
-		if (currentTime - lastTime >= (unsigned long) frames[frameIndex].duration) {
-			frameIndex++;
-			if (frameIndex >= numFrames)
-				frameIndex = 0;
-			lastTime = currentTime;
-			for (int i = 0; i < NUM_ELEMENTS; i++) {
-				digitalWrite(i + LED_1, frames[frameIndex].ledStates[i]);
-			}
-		}
-	}
+      unsigned long currentTime = millis();
+      if (currentTime - lastTime >= (unsigned long) frames[frameIndex].duration) {
+         frameIndex++;
+         if (frameIndex >= numFrames)
+            frameIndex = 0;
+         lastTime = currentTime;
+         for (int i = 0; i < NUM_ELEMENTS; i++) {
+            digitalWrite(i + LED_1, frames[frameIndex].ledStates[i]);
+         }
+      }
+   }
 };
 
 enum GameState {
-	MainMenu,
-	Playing,
+   MainMenu,
+   Playing,
 };
 
 GameState gameState = MainMenu;
@@ -107,182 +107,182 @@ Button buttons[] = {Button(5), Button(6), Button(7)};
 int leds[] = {11, 12, 13};
 
 AnimationFrame waitingFrames[] = {
-		{{HIGH, LOW, LOW}, 500},
-		{{LOW, HIGH, LOW}, 500},
-		{{LOW, LOW, HIGH}, 500},
-		{{0}, -1},
+        {{HIGH, LOW, LOW}, 500},
+        {{LOW, HIGH, LOW}, 500},
+        {{LOW, LOW, HIGH}, 500},
+        {{0}, -1},
 };
 Animation waitingAnimation(waitingFrames);
 
 AnimationFrame failFrames[] = {
-		{{HIGH, HIGH, HIGH}, 1000},
-		{{HIGH, HIGH, LOW}, 1000},
-		{{HIGH, LOW, LOW}, 1000},
-		{{LOW, LOW, LOW}, 1000},
-		{{0}, -1},
+        {{HIGH, HIGH, HIGH}, 1000},
+        {{HIGH, HIGH, LOW}, 1000},
+        {{HIGH, LOW, LOW}, 1000},
+        {{LOW, LOW, LOW}, 1000},
+        {{0}, -1},
 };
 Animation failAnimation(failFrames);
 
 AnimationFrame successFrames[] = {
-		{{HIGH, LOW, HIGH}, 200},
-		{{LOW, HIGH, LOW}, 200},
-		{{HIGH, LOW, HIGH}, 200},
-		{{LOW, HIGH, LOW}, 200},
-		{{HIGH, LOW, HIGH}, 200},
-		{{LOW, HIGH, LOW}, 200},
-		{{HIGH, LOW, HIGH}, 200},
-		{{LOW, HIGH, LOW}, 200},
-		{{HIGH, LOW, HIGH}, 200},
-		{{LOW, HIGH, LOW}, 200},
-		{{HIGH, LOW, HIGH}, 200},
-		{{LOW, HIGH, LOW}, 200},
-		{{HIGH, LOW, HIGH}, 200},
-		{{LOW, HIGH, LOW}, 200},
-		{{HIGH, LOW, HIGH}, 200},
-		{{LOW, HIGH, LOW}, 200},
-		{{0}, -1},
+        {{HIGH, LOW, HIGH}, 200},
+        {{LOW, HIGH, LOW}, 200},
+        {{HIGH, LOW, HIGH}, 200},
+        {{LOW, HIGH, LOW}, 200},
+        {{HIGH, LOW, HIGH}, 200},
+        {{LOW, HIGH, LOW}, 200},
+        {{HIGH, LOW, HIGH}, 200},
+        {{LOW, HIGH, LOW}, 200},
+        {{HIGH, LOW, HIGH}, 200},
+        {{LOW, HIGH, LOW}, 200},
+        {{HIGH, LOW, HIGH}, 200},
+        {{LOW, HIGH, LOW}, 200},
+        {{HIGH, LOW, HIGH}, 200},
+        {{LOW, HIGH, LOW}, 200},
+        {{HIGH, LOW, HIGH}, 200},
+        {{LOW, HIGH, LOW}, 200},
+        {{0}, -1},
 };
 Animation successAnimation(successFrames);
 
 AnimationFrame offFrames[] = {
-		{{LOW, LOW, LOW}, 500},
-		{{0}, -1},
+        {{LOW, LOW, LOW}, 500},
+        {{0}, -1},
 };
 Animation offAnimation(offFrames);
 
 AnimationFrame onFrames[] = {
-		{{HIGH, HIGH, HIGH}, 500},
-		{{0}, -1},
+        {{HIGH, HIGH, HIGH}, 500},
+        {{0}, -1},
 };
 Animation onAnimation(onFrames);
 
 void waitForNoButtonsPressed() {
-	while (true) {
-		bool somePressed = false;
-		for (int i = 0; i < NUM_ELEMENTS; i++) {
-			buttons[i].update();
-			somePressed |= buttons[i].state == HIGH;
-		}
-		if (!somePressed) {
-			break;
-		}
-	}
+   while (true) {
+      bool somePressed = false;
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
+         buttons[i].update();
+         somePressed |= buttons[i].state == HIGH;
+      }
+      if (!somePressed) {
+         break;
+      }
+   }
 }
 
 void playbackSequence() {
-	offAnimation.update();
-	delay(1000);
-	Serial.println("==== playing sequence");
-	for (int i = 0; i < sequenceIndex; i++) {
-		offAnimation.update();
-		delay(SEQUENCE_PAUSE);
-		digitalWrite(sequence[i] + leds[0], HIGH);
-		Serial.println(sequence[i]);
-		delay(SEQUENCE_INTERVAL);
-	}
-	sequenceIndex++;
+   offAnimation.update();
+   delay(1000);
+   Serial.println("==== playing sequence");
+   for (int i = 0; i < sequenceIndex; i++) {
+      offAnimation.update();
+      delay(SEQUENCE_PAUSE);
+      digitalWrite(sequence[i] + leds[0], HIGH);
+      Serial.println(sequence[i]);
+      delay(SEQUENCE_INTERVAL);
+   }
+   sequenceIndex++;
 }
 
 void gameOver(bool success) {
-	unsigned long start = millis();
-	Animation *animation = success ? &successAnimation : &failAnimation;
-	animation->reset();
-	while (millis() - start < animation->duration) {
-		animation->update();
-	}
-	waitingAnimation.reset();
-	gameState = MainMenu;
+   unsigned long start = millis();
+   Animation *animation = success ? &successAnimation : &failAnimation;
+   animation->reset();
+   while (millis() - start < animation->duration) {
+      animation->update();
+   }
+   waitingAnimation.reset();
+   gameState = MainMenu;
 }
 
 void readSequence() {
-	int playerSequenceIndex = 0;
+   int playerSequenceIndex = 0;
 
-	Serial.println("==== reading sequence");
-	bool done = false;
-	while (!done) {
-		for (int i = 0; i < NUM_ELEMENTS; i++) {
-			buttons[i].update();
-			digitalWrite(leds[i], buttons[i].state);
+   Serial.println("==== reading sequence");
+   bool done = false;
+   while (!done) {
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
+         buttons[i].update();
+         digitalWrite(leds[i], buttons[i].state);
 
-			if (buttons[i].justPressed) {
-				playerSequence[playerSequenceIndex] = i;
-				Serial.println(i);
-				playerSequenceIndex++;
+         if (buttons[i].justPressed) {
+            playerSequence[playerSequenceIndex] = i;
+            Serial.println(i);
+            playerSequenceIndex++;
 
-				if (playerSequenceIndex == sequenceIndex - 1) {
-					waitForNoButtonsPressed();
+            if (playerSequenceIndex == sequenceIndex - 1) {
+               waitForNoButtonsPressed();
 
-					for (int i = 0; i < playerSequenceIndex; i++) {
-						if (sequence[i] != playerSequence[i]) {
-							Serial.println("Sequences differ, failed");
-							gameOver(false);
-							return;
-						}
-					}
+               for (int i = 0; i < playerSequenceIndex; i++) {
+                  if (sequence[i] != playerSequence[i]) {
+                     Serial.println("Sequences differ, failed");
+                     gameOver(false);
+                     return;
+                  }
+               }
 
-					if (sequenceIndex == MAX_SEQUENCE) {
-						Serial.println("Sequence matched, success");
-						gameOver(true);
-					}
+               if (sequenceIndex == MAX_SEQUENCE) {
+                  Serial.println("Sequence matched, success");
+                  gameOver(true);
+               }
 
-					done = true;
-					break;
-				}
-			}
-		}
-	}
+               done = true;
+               break;
+            }
+         }
+      }
+   }
 }
 
 void gameLoop() {
-	playbackSequence();
-	offAnimation.update();
-	delay(500);
-	onAnimation.update();
-	delay(500);
-	offAnimation.update();
-	readSequence();
+   playbackSequence();
+   offAnimation.update();
+   delay(500);
+   onAnimation.update();
+   delay(500);
+   offAnimation.update();
+   readSequence();
 }
 
 void mainMenu() {
-	waitingAnimation.update();
+   waitingAnimation.update();
 
-	bool justPressed = false;
-	for (int i = 0; i < NUM_ELEMENTS; i++) {
-		buttons[i].update();
-		if (buttons[i].justPressed) {
-			justPressed = true;
-			break;
-		}
-	}
+   bool justPressed = false;
+   for (int i = 0; i < NUM_ELEMENTS; i++) {
+      buttons[i].update();
+      if (buttons[i].justPressed) {
+         justPressed = true;
+         break;
+      }
+   }
 
-	if (justPressed) {
-		waitForNoButtonsPressed();
+   if (justPressed) {
+      waitForNoButtonsPressed();
 
-		offAnimation.update();
+      offAnimation.update();
 
-		for (int i = 0; i < MAX_SEQUENCE; i++) {
-			sequence[i] = random(0, 3);
-		}
-		sequenceIndex = 1;
-		gameState = Playing;
-		return;
-	}
+      for (int i = 0; i < MAX_SEQUENCE; i++) {
+         sequence[i] = random(0, 3);
+      }
+      sequenceIndex = 1;
+      gameState = Playing;
+      return;
+   }
 }
 
 void setup() {
-	Serial.begin(9600);
-	randomSeed(analogRead(0));
+   Serial.begin(9600);
+   randomSeed(analogRead(0));
 
-	for (int i = 0; i < NUM_ELEMENTS; i++) {
-		pinMode(leds[i], OUTPUT);
-		buttons[i].init();
-	}
+   for (int i = 0; i < NUM_ELEMENTS; i++) {
+      pinMode(leds[i], OUTPUT);
+      buttons[i].init();
+   }
 }
 
 void loop() {
-	if (gameState == MainMenu) {
-		mainMenu();
-	} else if (gameState == Playing) {
-		gameLoop();
-	}
+   if (gameState == MainMenu) {
+      mainMenu();
+   } else if (gameState == Playing) {
+      gameLoop();
+   }
 }
