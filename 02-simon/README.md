@@ -1,7 +1,7 @@
 # 02-simon
 A simple implementation of Simon says.
 
-
+https://github.com/user-attachments/assets/a8d391ff-95d8-4655-9821-4cf0680b56a4
 
 ## Components
 - Arduino Uno R3
