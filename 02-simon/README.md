@@ -13,7 +13,7 @@ A simple implementation of Simon says.
 
 Note that the pins the buttons are connected to are using the pin's internal pull-up resistor, which is why they are wired in "reverse", without a pull-down resistor.
 
-## Design
+## Design & implementation
 The game consists of 3 "screens".
 
 - Main menu: the 3 LEDs light up in sequence until the player presses any button. See `mainMenu()` in [src/main.cpp](src/main.cpp).
