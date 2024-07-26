@@ -1,6 +1,8 @@
 # 02-simon
 A simple implementation of Simon says.
 
+![demo.mp4](demo.mp4)
+
 ## Components
 - Arduino Uno R3
 - 3x LED red
