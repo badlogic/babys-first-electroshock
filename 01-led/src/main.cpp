@@ -1,14 +1,28 @@
 #include <Arduino.h>
 
+constexpr uint8_t led_pins[] = {2, 3, 4, 5};
+constexpr uint8_t num_leds = sizeof(led_pins) / sizeof(led_pins[0]);
+
+void leds_setup() {
+  for (int i = 0; i < num_leds; i++) {
+    pinMode(led_pins[i], OUTPUT);
+  }
+}
+
+void leds_set_all(uint8_t value) {
+  for (int i = 0; i < num_leds; i++) {
+    digitalWrite(led_pins[i], value);
+  }
+}
+
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
-  Serial.begin(9600);
+  leds_setup();
 }
 
 void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(100);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(100);
-  Serial.println("Hell World");
+  for (int i = 0; i < num_leds; i++) {
+    leds_set_all(LOW);
+    digitalWrite(led_pins[i], HIGH);
+    delay(250);
+  }
 }
