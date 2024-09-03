@@ -1,4 +1,16 @@
 dependencies:
-  espressif/arduino-esp32: "^3.0.4"
-  idf:
-    version: '>=4.1.0'
+  idf: '>=4.1.0'
+  arduino:
+    git: https://github.com/espressif/arduino-esp32
+    version: "3.0.4"
+  adafruit_gfx:
+    git: https://github.com/adafruit/Adafruit-GFX-Library
+    version: 1.11.10
+  Adafruit_BusIO:
+    git: https://github.com/adafruit/Adafruit_BusIO
+    version: 1.16.1
+  adafruit_st7735:
+    git: https://github.com/badlogic/Adafruit-ST7735-Library
+  adafruit_ili9341:
+    git: https://github.com/badlogic/Adafruit_ILI9341
+    version: master

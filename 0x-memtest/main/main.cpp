@@ -85,7 +85,7 @@ int RamTest()
         memset(fb, (char)random(), fbSize);
     }
     double time = GetTime() - st;
-    printf("\nmemset total: %f, frame: %f\n", time, time / 10);
+    printf("\nmemset total: %f, frame: %f ms\n", time, time / 10 * 1000);
 
     printf("Test done!\n");
     return xx + fb[random() % 123];

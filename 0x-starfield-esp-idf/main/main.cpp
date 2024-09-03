@@ -38,9 +38,11 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 #endif
 
 
-const int fbWidth = TFT_WIDTH;
-const int fbHeight = TFT_HEIGHT;
+int fbWidth = TFT_WIDTH;
+int fbHeight = TFT_HEIGHT;
 uint16_t *frameBuffer;
+
+double GetTime() { return (double)esp_timer_get_time() / 1000000; }
 
 void fb_clear(uint16_t color) {
 	uint32_t d = color << 16 | color;
@@ -100,9 +102,8 @@ void draw_star(const star_t &star) {
 	fb_pset(sx, sy, color);
 }
 
-void setup() {
-	Serial.begin(115200);
 
+void setup() {
 #ifdef TFT_ST7735
 	tft.setSPISpeed(42000000);
 	tft.initR(INITR_144GREENTAB);
@@ -117,7 +118,7 @@ void setup() {
 	// read diagnostics (optional but can help debug problems)
 	tft.begin(42000000);
 #endif
-	frameBuffer = (uint16_t *) heap_caps_malloc(fbWidth * fbHeight * sizeof(uint16_t), MALLOC_CAP_SPIRAM);
+	frameBuffer = (uint16_t *) heap_caps_malloc(fbWidth * fbHeight * sizeof(uint16_t), MALLOC_CAP_INTERNAL);
 
 	init_stars();
 }
@@ -125,12 +126,12 @@ void setup() {
 int frame = 0;
 
 void loop() {
-	auto start = millis();
+	auto start = GetTime();
 
-	// fb_clear(0x0000);
-	fb_clear_black();
+	fb_clear(0x0000);
+	// fb_clear_black();
 
-	auto clear = millis() - start;
+	auto clear = GetTime() - start;
 
 	for (int i = 0; i < NUM_STARS; i++) {
 		update_star(stars[i]);
@@ -140,8 +141,7 @@ void loop() {
 	fb_show();
 
 	if (frame % 30 == 0) {
-		Serial.printf("clear: %i ms\nframe: %i\n", clear, millis() - start);
-		Serial.println(" ms");
+		printf("clear: %f ms\nframe: %f ms\n", clear * 1000, (GetTime() - start) * 1000);
 	}
 	frame++;
 }
