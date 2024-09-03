@@ -1,2 +1,5 @@
 .DS_Store
 .cache
+managed_components
+dependencies.lock
+sdkconfig

@@ -1,0 +1,10 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.adapterTargetName": "esp32s3",
+    "idf.openOcdConfigs": [
+        "board/esp32s3-builtin.cfg"
+    ],
+    "idf.port": "/dev/cu.usbmodem1101",
+    "idf.enableSizeTaskAfterBuildTask": false,
+    "idf.flashType": "JTAG"
+}
