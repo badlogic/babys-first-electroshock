@@ -6,8 +6,8 @@
 #include <SPI.h>
 
 // Select driver
-// #define TFT_ST7735
-#define TFT_ST7789
+#define TFT_ST7735
+// #define TFT_ST7789
 // #define TFT_ILI9341
 
 #define TFT_CS 10
