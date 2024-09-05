@@ -4,49 +4,50 @@
 #include <Adafruit_ST7789.h>
 #include <Adafruit_ILI9341.h>
 #include <SPI.h>
+#include "esp_task_wdt.h"
 
 // Select driver
 // #define TFT_ST7735
 #define TFT_ST7789
 // #define TFT_ILI9341
 
-#define TFT_CS 10
-#define TFT_MISO 12
-#define TFT_MOSI 11
-#define TFT_SCL 13
-#define TFT_DC 8
+#define TFT_CS 21
+#define TFT_MISO 47
+#define TFT_MOSI 38
+#define TFT_SCL 48
+#define TFT_DC 17
 #define TFT_RST -1
 
 #ifdef TFT_ST7735
 #define TFT_WIDTH 128
 #define TFT_HEIGHT 128
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 #endif
 
 #ifdef TFT_ST7789
 #define TFT_WIDTH 240
 #define TFT_HEIGHT 320
-Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
+// Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 #endif
 
 #ifdef TFT_ILI9341
 #define TFT_WIDTH 240
 #define TFT_HEIGHT 320
-// Doesn't got fullspeed with MISO??
-// Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCL, TFT_RST, TFT_MISO);
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
+// Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 #endif
 
 
 int fbWidth = TFT_WIDTH;
 int fbHeight = TFT_HEIGHT;
 uint16_t *frameBuffer;
+Adafruit_SPITFT *tft = nullptr;
 
-double GetTime() { return (double)esp_timer_get_time() / 1000000; }
+SPIClass spi = SPIClass();
+
+double GetTime() { return (double) esp_timer_get_time() / 1000000; }
 
 void fb_clear(uint16_t color) {
 	uint32_t d = color << 16 | color;
-	uint32_t *out = (uint32_t *)frameBuffer;
+	uint32_t *out = (uint32_t *) frameBuffer;
 	for (int i = 0, n = fbWidth * fbHeight / 2; i < n; i++) {
 		out[i] = d;
 	}
@@ -62,10 +63,10 @@ void fb_pset(int x, int y, uint16_t color) {
 }
 
 void fb_show() {
-	tft.startWrite();
-	tft.setAddrWindow(0, 0, fbWidth, fbHeight);
-	tft.writePixels(frameBuffer, fbWidth * fbHeight);
-	tft.endWrite();
+	tft->startWrite();
+	tft->setAddrWindow(0, 0, fbWidth, fbHeight);
+	tft->writePixels(frameBuffer, fbWidth * fbHeight);
+	tft->endWrite();
 }
 
 struct star_t {
@@ -103,45 +104,55 @@ void draw_star(const star_t &star) {
 }
 
 
-void setup() {
+extern "C" void app_main() {
+	initArduino();
+	spi.begin(TFT_SCL, TFT_MISO, TFT_MOSI, -1);
+
 #ifdef TFT_ST7735
-	tft.setSPISpeed(42000000);
-	tft.initR(INITR_144GREENTAB);
+	Adafruit_ST7735 *st7735 = new Adafruit_ST7735(&spi, TFT_CS, TFT_DC, TFT_RST);
+	tft = st7735;
+	st7735->setSPISpeed(42000000);
+	st7735->initR(INITR_144GREENTAB);
 #endif
 
 #ifdef TFT_ST7789
-	tft.init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE3);
-	tft.setSPISpeed(80000000);
+	Adafruit_ST7789 *st7789 = new Adafruit_ST7789(&spi, TFT_CS, TFT_DC, TFT_RST);
+	tft = st7789;
+	st7789->init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE3);
+	st7789->setSPISpeed(80000000);
 #endif
 
 #ifdef TFT_ILI9341
 	// read diagnostics (optional but can help debug problems)
-	tft.begin(42000000);
+	Adafruit_ILI9341 *ili9341 = new Adafruit_ILI9341(&spi, TFT_DC, TFT_CS, TFT_RST);
+	ili9341->begin(42000000);
+	tft = ili9341;
 #endif
 	frameBuffer = (uint16_t *) heap_caps_malloc(fbWidth * fbHeight * sizeof(uint16_t), MALLOC_CAP_INTERNAL);
 
 	init_stars();
-}
 
-int frame = 0;
 
-void loop() {
-	auto start = GetTime();
+	int frame = 0;
 
-	fb_clear(0x0000);
-	// fb_clear_black();
+	while (true) {
+		auto start = GetTime();
 
-	auto clear = GetTime() - start;
+		fb_clear(0x0000);
+		// fb_clear_black();
 
-	for (int i = 0; i < NUM_STARS; i++) {
-		update_star(stars[i]);
-		draw_star(stars[i]);
+		auto clear = GetTime() - start;
+
+		for (int i = 0; i < NUM_STARS; i++) {
+			update_star(stars[i]);
+			draw_star(stars[i]);
+		}
+
+		fb_show();
+
+		if (frame % 30 == 0) {
+			printf("clear: %f ms\nframe: %f ms\n", clear * 1000, (GetTime() - start) * 1000);
+		}
+		frame++;
 	}
-
-	fb_show();
-
-	if (frame % 30 == 0) {
-		printf("clear: %f ms\nframe: %f ms\n", clear * 1000, (GetTime() - start) * 1000);
-	}
-	frame++;
 }
