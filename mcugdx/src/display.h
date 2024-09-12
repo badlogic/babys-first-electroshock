@@ -26,6 +26,15 @@ typedef struct {
     int cs;
 } mcugdx_display_config_t;
 
+typedef struct {
+	int native_width;
+	int native_height;
+	mcugdx_display_orientation_t orientation;
+	int width;
+	int height;
+	uint16_t *frame_buffer;
+} mcugdx_display_t;
+
 void mcugdx_display_init(mcugdx_display_config_t *display_cfg);
 
 void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation);

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "common/rofs.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/i2s_std.h"
@@ -14,78 +16,18 @@
 #define QOA_MALLOC(size) heap_caps_calloc(1, size, MALLOC_CAP_SPIRAM)
 #include "qoa.h"
 
+#define TAG "Audio"
+
 #define SAMPLING_FREQUENCY 44100
 #define BUFF_SIZE 2048
 #define WS 1
 #define BLCK 2
 #define DOUT 3
 
-extern const uint8_t music_start[] asm("_binary_music_wav_start");
-extern const uint8_t music_end[]   asm("_binary_music_wav_end");
-
-extern const uint8_t music_qoa_start[] asm("_binary_music_qoa_start");
-extern const uint8_t music_qoa_end[]   asm("_binary_music_qoa_end");
-
 i2s_chan_handle_t channel;
 
-/*uint32_t get_wav_header_size(const uint8_t *wav_data) {
-    uint32_t offset = 12; // Skip RIFF header (12 bytes)
-
-    // Read through the chunks until we find the 'data' chunk
-    while (memcmp(wav_data + offset, "data", 4) != 0) {
-        // Get the chunk size
-        uint32_t chunk_size = *(uint32_t *)(wav_data + offset + 4);
-        offset += 8 + chunk_size; // Move past the chunk ('name' + size + data)
-    }
-
-    return offset + 8; // 'data' chunk starts at offset, add 8 bytes for 'data' and its size
-}
-
-static void i2s_example_write_task(void *args) {
-    uint8_t *buffer = (uint8_t *) calloc(1, BUFF_SIZE);
-    assert(buffer); // Check if buffer allocation is successful
-
-    uint32_t pcm_offset = get_wav_header_size(music_start);
-    uint32_t num_samples = (music_end - music_start - pcm_offset) / 2; // 16-bit samples
-    int16_t *pcm = (int16_t *)(music_start + pcm_offset);
-
-    printf("PCM offset: %lu\n", pcm_offset);
-    printf("Samples: %lu\n", num_samples);
-
-    size_t w_bytes = BUFF_SIZE;
-    uint32_t sample_index = 0; // To track the current sample
-
-    // Preload the initial buffer
-    while (w_bytes == BUFF_SIZE) {
-        ESP_ERROR_CHECK(i2s_channel_preload_data(channel, buffer, BUFF_SIZE, &w_bytes));
-    }
-
-    ESP_ERROR_CHECK(i2s_channel_enable(channel));
-
-    while (1) {
-        // If the end of PCM data is reached, reset the index to start over
-        if (sample_index >= num_samples) {
-            sample_index = 0; // Reset to start playback from the beginning
-        }
-
-        // Copy the PCM data to the buffer
-        size_t bytes_to_copy = BUFF_SIZE;
-        if (sample_index + BUFF_SIZE / 2 > num_samples) {
-            bytes_to_copy = (num_samples - sample_index) * 2; // Remaining bytes
-        }
-
-        memcpy(buffer, &pcm[sample_index], bytes_to_copy);
-        sample_index += bytes_to_copy / 2; // Move forward by the number of 16-bit samples
-
-        // Write PCM data to the I2S channel
-        ESP_ERROR_CHECK(i2s_channel_write(channel, buffer, bytes_to_copy, &w_bytes, 1000));
-
-        // Small delay to allow task switching
-        vTaskDelay(pdMS_TO_TICKS(1));
-    }
-
-    free(buffer);
-}*/
+uint8_t *music;
+uint32_t music_size;
 
 static void i2s_example_write_task(void *args) {
     uint8_t *buffer = (uint8_t *) calloc(1, BUFF_SIZE);
@@ -97,9 +39,9 @@ static void i2s_example_write_task(void *args) {
 
     qoa_desc qoa;
     double decode_start = mcugdx_time();
-    int16_t *samples = qoa_decode(music_qoa_start, music_qoa_end - music_qoa_start, &qoa);
-    printf("channels: %i, sample rate: %i, samples: %i\n", qoa.channels, qoa.samplerate, qoa.samples);
-    printf("decode: %f ms\n",  (mcugdx_time() - decode_start) * 1000);
+    int16_t *samples = qoa_decode(music, music_size, &qoa);
+    mcugdx_log(TAG, "channels: %i, sample rate: %i, samples: %i\n", qoa.channels, qoa.samplerate, qoa.samples);
+    mcugdx_log(TAG, "decode: %f ms\n",  (mcugdx_time() - decode_start) * 1000);
 
     size_t w_bytes = BUFF_SIZE;
     uint32_t sample_index = 0; // To track the current sample
@@ -133,15 +75,15 @@ static void i2s_example_write_task(void *args) {
         }
 
         sample_index += samples_to_copy; // Move forward by the number of samples copied
-        if (!printed) printf("prepare: %f ms\n", (mcugdx_time() - prepare_start) * 1000);
+        if (!printed) mcugdx_log(TAG, "prepare: %f ms\n", (mcugdx_time() - prepare_start) * 1000);
 
         // Write PCM data to the I2S channel
         double output_start = mcugdx_time();
         ESP_ERROR_CHECK(i2s_channel_write(channel, buffer, samples_to_copy * 2, &w_bytes, 1000));
         if (samples_to_copy * 2 != w_bytes) {
-            printf("Not all samples written: %i -> %i\n", samples_to_copy * 2, w_bytes);
+            mcugdx_log(TAG, "Not all samples written: %i -> %i\n", samples_to_copy * 2, w_bytes);
         }
-        if (!printed) printf("output: %f ms\n", (mcugdx_time() - output_start) * 1000);
+        if (!printed) mcugdx_log(TAG, "output: %f ms\n", (mcugdx_time() - output_start) * 1000);
 
         // Small delay to allow task switching
         vTaskDelay(pdMS_TO_TICKS(1));
@@ -178,8 +120,12 @@ static void init() {
 }
 
 extern "C" void app_main() {
-	printf("Audio test\n");
+	mcugdx_log(TAG, "Audio test\n");
 
+    if (!rofs_init()) {
+        mcugdx_log(TAG, "Could not initialize ROFS\n");
+    }
+    music = rofs_read_file("music.qoa", &music_size, MCUGDX_MEM_INTERNAL);
 	init();
 	xTaskCreate(i2s_example_write_task, "i2s_example_write_task", 4096, NULL, 5, NULL);
 }

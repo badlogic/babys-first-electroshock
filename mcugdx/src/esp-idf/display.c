@@ -49,27 +49,18 @@
 
 #include <driver/spi_master.h>
 #include <driver/gpio.h>
-#include "esp_log.h"
+#include "esp_heap_caps.h"
+#include "log.h"
 
 #define BUFFER_SIZE 4096
 
-#define TAG "MCUGDX_DISPLAY"
-
-#define reverse_color(color) (((color) >> 8) | ((color) << 8))
-
-typedef struct {
-	mcugdx_display_driver_t driver;
-	int native_width;
-	int native_height;
-	mcugdx_display_orientation_t orientation;
-	int width;
-	int height;
-	int dc;
-	spi_device_handle_t spi_handle;
-	uint16_t *frame_buffer;
-} mcugdx_display_t;
+#define TAG "mcugdx_display"
 
 mcugdx_display_t display;
+mcugdx_display_driver_t driver;
+int dc;
+spi_device_handle_t spi_handle;
+uint16_t *frame_buffer;
 
 void pin_mode(int pin, gpio_mode_t mode, int level) {
 	gpio_reset_pin(pin);
@@ -257,7 +248,7 @@ void mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			.flags = 0};
 
 	esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_config, SPI_DMA_CH_AUTO);
-	ESP_LOGI(TAG, "Initialized SPI bus %d", ret);
+	mcugdx_log(TAG, "Initialized SPI bus %d", ret);
 	assert(ret == ESP_OK);
 
 	// Setup up display device, starting with CS and DC pins followed by adding the SPI device
@@ -274,34 +265,34 @@ void mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			device_config.clock_speed_hz = SPI_MASTER_FREQ_40M;
 			break;
 		default:
-			ESP_LOGE(TAG, "Unknown display driver %i", display_cfg->driver);
+			mcugdx_loge(TAG, "Unknown display driver %i", display_cfg->driver);
 	}
 	device_config.queue_size = 7;
 	device_config.mode = 3;
 	device_config.flags = SPI_DEVICE_NO_DUMMY;
 	device_config.spics_io_num = display_cfg->cs >= 0 ? display_cfg->cs : -1;
 
-	ret = spi_bus_add_device(SPI2_HOST, &device_config, &display.spi_handle);
-	ESP_LOGI(TAG, "Added SPI display device %d", ret);
+	ret = spi_bus_add_device(SPI2_HOST, &device_config, &spi_handle);
+	mcugdx_log(TAG, "Added SPI display device %d", ret);
 
 	// Setup internal display struct
-	display.driver = display_cfg->driver;
+	driver = display_cfg->driver;
 	display.native_width = display.width = display_cfg->native_width;
 	display.native_height = display.height = display_cfg->native_height;
 	display.orientation = MCUGDX_PORTRAIT;
-	display.dc = display_cfg->dc;
+	dc = display_cfg->dc;
 	display.frame_buffer = heap_caps_calloc(display.width * display.height * sizeof(uint16_t), 1, MALLOC_CAP_DMA);
 
 	// Send init commands to display
-	switch (display.driver) {
+	switch (driver) {
 		case MCUGDX_ST7789:
-			init_st7789(display.spi_handle, display.dc);
+			init_st7789(spi_handle, dc);
 			break;
 		case MCUGDX_ILI9341:
-			init_ili9143(display.spi_handle, display.dc);
+			init_ili9143(spi_handle, dc);
 			break;
 		default:
-			ESP_LOGE(TAG, "Unknown display driver %i", display.driver);
+			mcugdx_loge(TAG, "Unknown display driver %i", driver);
 	}
 
 	// Set orientation to portrait by default
@@ -337,112 +328,28 @@ void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
 			display.height = display.native_width;
 			break;
 		default:
-			ESP_LOGE(TAG, "Unsupported display orientation %i", orientation);
+			mcugdx_loge(TAG, "Unsupported display orientation %i", orientation);
 	}
-	spi_write_command(display.spi_handle, display.dc, MADCTL);
-	spi_write_data_byte(display.spi_handle, display.dc, madctl);
+	spi_write_command(spi_handle, dc, MADCTL);
+	spi_write_data_byte(spi_handle, dc, madctl);
 
 	display.orientation = orientation;
 }
 
-void mcugdx_display_clear() {
-	memset(display.frame_buffer, 0, display.width * display.height * sizeof(uint16_t));
-}
-
-void mcugdx_display_clear_color(uint16_t color) {
-	uint16_t *frame_buffer = display.frame_buffer;
-	uint16_t reversed_color = reverse_color(color);
-	for (int i = 0, n = display.width * display.height; i < n; i++) {
-		frame_buffer[i] = reversed_color;
-	}
-}
-
-void mcugdx_display_set_pixel(int x, int y, uint16_t color) {
-	if (x < 0 || x >= display.width) return;
-	if (y < 0 || y >= display.height) return;
-
-	uint16_t reversed_color = color;
-	display.frame_buffer[x + display.width * y] = reversed_color;
-}
-
-void mcugdx_display_hline(int32_t x1, int32_t x2, int32_t y, uint32_t color) {
-	if (x1 > x2) {
-		int32_t tmp = x2;
-		x2 = x1;
-		x1 = tmp;
-	}
-
-	if (x1 >= display.width) return;
-	if (x2 < 0) return;
-	if (y < 0) return;
-	if (y >= display.height) return;
-
-	if (x1 < 0) x1 = 0;
-	if (x2 >= display.width) x2 = display.width - 1;
-
-	uint16_t reversed_color = reverse_color(color);
-	uint16_t *pixels = display.frame_buffer + y * display.width + x1;
-	int32_t num_pixels = x2 - x1 + 1;
-	while (num_pixels--) {
-		*pixels++ = reversed_color;
-	}
-}
-
-void mcugdx_display_rect(int32_t x1, int32_t y1, int32_t width, int32_t height, uint32_t color) {
-	if (width <= 0) return;
-	if (height <= 0) return;
-
-	int32_t x2 = x1 + width - 1;
-	int32_t y2 = y1 + height - 1;
-
-	if (x1 >= display.width) return;
-	if (x2 < 0) return;
-	if (y1 >= display.height) return;
-	if (y2 < 0) return;
-
-	if (x1 < 0) x1 = 0;
-	if (y1 < 0) y1 = 0;
-	if (x2 >= display.width) x2 = display.width - 1;
-	if (y2 >= display.height) y2 = display.height - 1;
-
-	uint16_t reversed_color = reverse_color(color);
-	int32_t clipped_width = x2 - x1 + 1;
-	int32_t next_row = display.width - clipped_width;
-	uint16_t *pixel = display.frame_buffer + y1 * display.width + x1;
-	for (int32_t y = y1; y <= y2; y++) {
-		for (int32_t i = 0; i < clipped_width; i++) {
-			*pixel++ = reversed_color;
-		}
-		pixel += next_row;
-	}
-}
-
 void mcugdx_display_show() {
-	spi_write_command(display.spi_handle, display.dc, 0x2A);
-	spi_write_addr(display.spi_handle, display.dc, 0, display.width - 1);
-	spi_write_command(display.spi_handle, display.dc, 0x2B);
-	spi_write_addr(display.spi_handle, display.dc, 0, display.height - 1);
-	spi_write_command(display.spi_handle, display.dc, 0x2C);
+	spi_write_command(spi_handle, dc, 0x2A);
+	spi_write_addr(spi_handle, dc, 0, display.width - 1);
+	spi_write_command(spi_handle, dc, 0x2B);
+	spi_write_addr(spi_handle, dc, 0, display.height - 1);
+	spi_write_command(spi_handle, dc, 0x2C);
 
 	uint32_t size = display.width * display.height * 2;
 	uint8_t *frame_buffer = (uint8_t *) display.frame_buffer;
-	gpio_set_level(display.dc, 1);
+	gpio_set_level(dc, 1);
 	while (size > 0) {
 		uint16_t bs = (size > BUFFER_SIZE) ? BUFFER_SIZE : size;
-		spi_write_bytes(display.spi_handle, frame_buffer, bs);
+		spi_write_bytes(spi_handle, frame_buffer, bs);
 		size -= bs;
 		frame_buffer += bs;
 	}
-}
-
-int mcugdx_display_width() {
-	return display.width;
-}
-
-int mcugdx_display_height() {
-	return display.height;
-}
-
-uint16_t *mcugdx_display_frame_buffer() {
-	return display.frame_buffer;
 }

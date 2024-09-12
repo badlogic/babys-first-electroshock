@@ -7,12 +7,8 @@ endif()
 project(audio)
 
 if(NOT DEFINED ESP_PLATFORM)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build-desktop)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build-desktop)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build-desktop)
 add_subdirectory(../../ ${CMAKE_BINARY_DIR}/mcugdx)
-
-add_executable(display "main/main.cpp")
-target_link_libraries(display PUBLIC mcugdx)
-
+add_executable(audio "main/main.cpp")
+target_link_libraries(audio PUBLIC mcugdx)
+mcugdx_create_rofs_partition(rofs "${CMAKE_CURRENT_SOURCE_DIR}/data/")
 endif()

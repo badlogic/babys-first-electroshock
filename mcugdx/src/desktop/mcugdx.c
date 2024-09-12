@@ -14,10 +14,6 @@ double mcugdx_time(void) {
     return mfb_timer_delta(timer);
 }
 
-void mcugdx_print_memory(void) {
-    printf("mcugdx_print_memory: not implemented on desktop");
-}
-
 extern void app_main(void);
 
 int main(void) {
