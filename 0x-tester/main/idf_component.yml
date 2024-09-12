@@ -1,0 +1,3 @@
+dependencies:
+  esp_ws28xx:
+    git: https://github.com/okhsunrog/esp_ws28xx

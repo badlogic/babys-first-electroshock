@@ -1,0 +1,12 @@
+name: mcugdx
+version: "0.0.1"
+description: "Game development framework for ESP32-S3 based projects"
+maintainers:
+  - Mario Zechner (https://mariozechner.at)
+url: https://github.com/badlogic/mcugdx
+repository: https://github.com/badlogic/mcugdx.git
+documentation: https://github.com/badlogic/mcugdx
+issues: https://github.com/badlogic/mcugdx/issues
+dependencies:
+  idf:
+    version: ">=5.1.4"

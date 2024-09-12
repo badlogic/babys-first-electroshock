@@ -7,15 +7,15 @@
 #include "esp_task_wdt.h"
 
 // Select driver
-// #define TFT_ST7735
-#define TFT_ST7789
+#define TFT_ST7735
+// #define TFT_ST7789
 // #define TFT_ILI9341
 
-#define TFT_CS 21
-#define TFT_MISO 47
-#define TFT_MOSI 38
-#define TFT_SCL 48
-#define TFT_DC 17
+#define TFT_CS 1
+#define TFT_DC 2
+#define TFT_MOSI 3
+#define TFT_SCL 4
+#define TFT_MISO -1
 #define TFT_RST -1
 
 #ifdef TFT_ST7735
@@ -98,7 +98,7 @@ void draw_star(const star_t &star) {
 	int sy = (star.y * fbWidth / 2) / star.z + fbHeight / 2;
 
 	uint8_t brightness = map(star.z, 1, fbWidth, 255, 20);
-	uint16_t color = ((brightness >> 3) << 11) | ((brightness >> 2) << 5) | (brightness >> 3);
+	uint16_t color = 0xffff; // ((brightness >> 3) << 11) | ((brightness >> 2) << 5) | (brightness >> 3);
 
 	fb_pset(sx, sy, color);
 }

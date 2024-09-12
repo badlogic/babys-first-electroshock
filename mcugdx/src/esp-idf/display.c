@@ -1,0 +1,448 @@
+// Adapted from:
+//
+// - https://github.com/nopnop2002/esp-idf-st7789
+// - https://github.com/nopnop2002/esp-idf-ili9340/tree/master
+//
+// Both licensed under:
+//
+// MIT License
+//
+// Copyright (c) 2020 nopnop2002
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+// - https://github.com/adafruit/Adafruit_ILI9341
+//
+// Licensed under MIT, but has no LICENSE file in repository, just these paragraphs
+//
+// Adafruit invests time and resources providing this open source code, please
+// support Adafruit and open-source hardware by purchasing products from Adafruit!
+//
+// Written by Limor Fried/Ladyada for Adafruit Industries. MIT license, all text
+// above must be included in any redistribution
+
+
+#include "display.h"
+
+#include <string.h>
+#include <inttypes.h>
+#include <math.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+#include <driver/spi_master.h>
+#include <driver/gpio.h>
+#include "esp_log.h"
+
+#define BUFFER_SIZE 4096
+
+#define TAG "MCUGDX_DISPLAY"
+
+#define reverse_color(color) (((color) >> 8) | ((color) << 8))
+
+typedef struct {
+	mcugdx_display_driver_t driver;
+	int native_width;
+	int native_height;
+	mcugdx_display_orientation_t orientation;
+	int width;
+	int height;
+	int dc;
+	spi_device_handle_t spi_handle;
+	uint16_t *frame_buffer;
+} mcugdx_display_t;
+
+mcugdx_display_t display;
+
+void pin_mode(int pin, gpio_mode_t mode, int level) {
+	gpio_reset_pin(pin);
+	gpio_set_direction(pin, mode);
+	gpio_set_level(pin, level);
+}
+
+void delay(int ms) {
+	int _ms = ms + (portTICK_PERIOD_MS - 1);
+	vTaskDelay(_ms / portTICK_PERIOD_MS);
+}
+
+void spi_write_bytes(spi_device_handle_t device, const uint8_t *data, size_t length) {
+	spi_transaction_t SPITransaction;
+	esp_err_t ret;
+
+	if (length > 0) {
+		memset(&SPITransaction, 0, sizeof(spi_transaction_t));
+		SPITransaction.length = length * 8;
+		SPITransaction.tx_buffer = data;
+		ret = spi_device_polling_transmit(device, &SPITransaction);
+		assert(ret == ESP_OK);
+	}
+}
+
+void spi_write_command(spi_device_handle_t device, int dc, uint8_t cmd) {
+	static uint8_t byte = 0;
+	byte = cmd;
+	gpio_set_level(dc, 0);
+	spi_write_bytes(device, &byte, 1);
+}
+
+void spi_write_data_byte(spi_device_handle_t device, int dc, uint8_t data) {
+	static uint8_t byte = 0;
+
+	byte = data;
+	gpio_set_level(dc, 1);
+	spi_write_bytes(device, &byte, 1);
+}
+
+
+void spi_write_data_word(spi_device_handle_t device, int dc, uint16_t data) {
+	static uint8_t bytes[2];
+	bytes[0] = (data >> 8) & 0xFF;
+	bytes[1] = data & 0xFF;
+	gpio_set_level(dc, 1);
+	spi_write_bytes(device, bytes, 2);
+}
+
+void spi_write_addr(spi_device_handle_t device, int dc, uint16_t addr1, uint16_t addr2) {
+	static uint8_t bytes[4];
+	bytes[0] = (addr1 >> 8) & 0xFF;
+	bytes[1] = addr1 & 0xFF;
+	bytes[2] = (addr2 >> 8) & 0xFF;
+	bytes[3] = addr2 & 0xFF;
+	gpio_set_level(dc, 1);
+	spi_write_bytes(device, bytes, 4);
+}
+
+void init_st7789(spi_device_handle_t device, int dc) {
+	spi_write_command(device, dc, 0x01);//Software Reset
+	delay(150);
+
+	spi_write_command(device, dc, 0x11);//Sleep Out
+	delay(10);
+
+	spi_write_command(device, dc, 0x3A);//Interface Pixel Format
+	spi_write_data_byte(device, dc, 0x55);
+	delay(10);
+
+	spi_write_command(device, dc, 0x36);//Memory Data Access Control
+	spi_write_data_byte(device, dc, 0x00);
+
+	spi_write_command(device, dc, 0x2A);//Column Address Set
+	spi_write_data_byte(device, dc, 0x00);
+	spi_write_data_byte(device, dc, 0x00);
+	spi_write_data_byte(device, dc, 0x00);
+	spi_write_data_byte(device, dc, 0xF0);
+
+	spi_write_command(device, dc, 0x2B);//Row Address Set
+	spi_write_data_byte(device, dc, 0x00);
+	spi_write_data_byte(device, dc, 0x00);
+	spi_write_data_byte(device, dc, 0x00);
+	spi_write_data_byte(device, dc, 0xF0);
+
+	spi_write_command(device, dc, 0x21);//Display Inversion On
+	delay(10);
+
+	spi_write_command(device, dc, 0x13);//Normal Display Mode On
+	delay(10);
+
+	spi_write_command(device, dc, 0x29);//Display ON
+	delay(10);
+}
+
+void init_ili9143(spi_device_handle_t device, int dc) {
+	spi_write_command(device, dc, 0xC0);//Power Control 1
+	spi_write_data_byte(device, dc, 0x23);
+
+	spi_write_command(device, dc, 0xC1);//Power Control 2
+	spi_write_data_byte(device, dc, 0x10);
+
+	spi_write_command(device, dc, 0xC5);//VCOM Control 1
+	spi_write_data_byte(device, dc, 0x3E);
+	spi_write_data_byte(device, dc, 0x28);
+
+	spi_write_command(device, dc, 0xC7);//VCOM Control 2
+	spi_write_data_byte(device, dc, 0x86);
+
+	spi_write_command(device, dc, 0x36);  //Memory Access Control
+	spi_write_data_byte(device, dc, 0x08);//Right top start, BGR color filter panel
+	//spi_write_data_byte(device, dc, 0x00);//Right top start, RGB color filter panel
+
+	spi_write_command(device, dc, 0x3A);  //Pixel Format Set
+	spi_write_data_byte(device, dc, 0x55);//65K color: 16-bit/pixel
+
+	spi_write_command(device, dc, 0x20);//Display Inversion OFF
+
+	spi_write_command(device, dc, 0xB1);//Frame Rate Control
+	spi_write_data_byte(device, dc, 0x00);
+	spi_write_data_byte(device, dc, 0x18);
+
+	spi_write_command(device, dc, 0xB6);//Display Function Control
+	spi_write_data_byte(device, dc, 0x08);
+	spi_write_data_byte(device, dc, 0xA2);// REV:1 GS:0 SS:0 SM:0
+	spi_write_data_byte(device, dc, 0x27);
+	spi_write_data_byte(device, dc, 0x00);
+
+	spi_write_command(device, dc, 0x26);//Gamma Set
+	spi_write_data_byte(device, dc, 0x01);
+
+	spi_write_command(device, dc, 0xE0);//Positive Gamma Correction
+	spi_write_data_byte(device, dc, 0x0F);
+	spi_write_data_byte(device, dc, 0x31);
+	spi_write_data_byte(device, dc, 0x2B);
+	spi_write_data_byte(device, dc, 0x0C);
+	spi_write_data_byte(device, dc, 0x0E);
+	spi_write_data_byte(device, dc, 0x08);
+	spi_write_data_byte(device, dc, 0x4E);
+	spi_write_data_byte(device, dc, 0xF1);
+	spi_write_data_byte(device, dc, 0x37);
+	spi_write_data_byte(device, dc, 0x07);
+	spi_write_data_byte(device, dc, 0x10);
+	spi_write_data_byte(device, dc, 0x03);
+	spi_write_data_byte(device, dc, 0x0E);
+	spi_write_data_byte(device, dc, 0x09);
+	spi_write_data_byte(device, dc, 0x00);
+
+	spi_write_command(device, dc, 0xE1);//Negative Gamma Correction
+	spi_write_data_byte(device, dc, 0x00);
+	spi_write_data_byte(device, dc, 0x0E);
+	spi_write_data_byte(device, dc, 0x14);
+	spi_write_data_byte(device, dc, 0x03);
+	spi_write_data_byte(device, dc, 0x11);
+	spi_write_data_byte(device, dc, 0x07);
+	spi_write_data_byte(device, dc, 0x31);
+	spi_write_data_byte(device, dc, 0xC1);
+	spi_write_data_byte(device, dc, 0x48);
+	spi_write_data_byte(device, dc, 0x08);
+	spi_write_data_byte(device, dc, 0x0F);
+	spi_write_data_byte(device, dc, 0x0C);
+	spi_write_data_byte(device, dc, 0x31);
+	spi_write_data_byte(device, dc, 0x36);
+	spi_write_data_byte(device, dc, 0x0F);
+
+	spi_write_command(device, dc, 0x11);//Sleep Out
+	delay(120);
+
+	spi_write_command(device, dc, 0x29);//Display ON
+}
+
+void mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
+	// Setup SPI2 bus
+	spi_bus_config_t bus_config = {
+			.mosi_io_num = display_cfg->mosi,
+			.miso_io_num = -1,
+			.sclk_io_num = display_cfg->sck,
+			.quadhd_io_num = -1,
+			.quadwp_io_num = -1,
+			.data4_io_num = -1,
+			.data5_io_num = -1,
+			.data6_io_num = -1,
+			.data7_io_num = -1,
+			.max_transfer_sz = BUFFER_SIZE * 8,
+			.flags = 0};
+
+	esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_config, SPI_DMA_CH_AUTO);
+	ESP_LOGI(TAG, "Initialized SPI bus %d", ret);
+	assert(ret == ESP_OK);
+
+	// Setup up display device, starting with CS and DC pins followed by adding the SPI device
+	if (display_cfg->cs >= 0) pin_mode(display_cfg->cs, GPIO_MODE_OUTPUT, 0);
+	pin_mode(display_cfg->dc, GPIO_MODE_OUTPUT, 0);
+
+	spi_device_interface_config_t device_config;
+	memset(&device_config, 0, sizeof(device_config));
+	switch (display_cfg->driver) {
+		case MCUGDX_ST7789:
+			device_config.clock_speed_hz = SPI_MASTER_FREQ_80M;
+			break;
+		case MCUGDX_ILI9341:
+			device_config.clock_speed_hz = SPI_MASTER_FREQ_40M;
+			break;
+		default:
+			ESP_LOGE(TAG, "Unknown display driver %i", display_cfg->driver);
+	}
+	device_config.queue_size = 7;
+	device_config.mode = 3;
+	device_config.flags = SPI_DEVICE_NO_DUMMY;
+	device_config.spics_io_num = display_cfg->cs >= 0 ? display_cfg->cs : -1;
+
+	ret = spi_bus_add_device(SPI2_HOST, &device_config, &display.spi_handle);
+	ESP_LOGI(TAG, "Added SPI display device %d", ret);
+
+	// Setup internal display struct
+	display.driver = display_cfg->driver;
+	display.native_width = display.width = display_cfg->native_width;
+	display.native_height = display.height = display_cfg->native_height;
+	display.orientation = MCUGDX_PORTRAIT;
+	display.dc = display_cfg->dc;
+	display.frame_buffer = heap_caps_calloc(display.width * display.height * sizeof(uint16_t), 1, MALLOC_CAP_DMA);
+
+	// Send init commands to display
+	switch (display.driver) {
+		case MCUGDX_ST7789:
+			init_st7789(display.spi_handle, display.dc);
+			break;
+		case MCUGDX_ILI9341:
+			init_ili9143(display.spi_handle, display.dc);
+			break;
+		default:
+			ESP_LOGE(TAG, "Unknown display driver %i", display.driver);
+	}
+
+	// Set orientation to portrait by default
+	mcugdx_display_set_orientation(MCUGDX_PORTRAIT);
+}
+
+#define MADCTL_MY 0x80 ///< Bottom to top
+#define MADCTL_MX 0x40 ///< Right to left
+#define MADCTL_MV 0x20 ///< Reverse Mode
+#define MADCTL_ML 0x10 ///< LCD refresh Bottom to top
+#define MADCTL_RGB 0x00///< Red-Green-Blue pixel order
+#define MADCTL_BGR 0x08///< Blue-Green-Red pixel order
+#define MADCTL_MH 0x04 ///< LCD refresh right to left
+#define MADCTL 0x36
+
+#define ILI9341_TFTWIDTH 240
+#define ILI9341_TFTHEIGHT 320
+#define ST7789_TFT_WIDTH 240
+#define ST7789_TFT_HEIGHT 320
+
+void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
+	uint8_t madctl = orientation = orientation % 4;
+
+	switch (orientation) {
+		case MCUGDX_PORTRAIT:
+			madctl = (MADCTL_MY | MADCTL_BGR);
+			display.width = display.native_width;
+			display.height = display.native_height;
+			break;
+		case MCUGDX_LANDSCAPE:
+			madctl = (MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+			display.width = display.native_height;
+			display.height = display.native_width;
+			break;
+		default:
+			ESP_LOGE(TAG, "Unsupported display orientation %i", orientation);
+	}
+	spi_write_command(display.spi_handle, display.dc, MADCTL);
+	spi_write_data_byte(display.spi_handle, display.dc, madctl);
+
+	display.orientation = orientation;
+}
+
+void mcugdx_display_clear() {
+	memset(display.frame_buffer, 0, display.width * display.height * sizeof(uint16_t));
+}
+
+void mcugdx_display_clear_color(uint16_t color) {
+	uint16_t *frame_buffer = display.frame_buffer;
+	uint16_t reversed_color = reverse_color(color);
+	for (int i = 0, n = display.width * display.height; i < n; i++) {
+		frame_buffer[i] = reversed_color;
+	}
+}
+
+void mcugdx_display_set_pixel(int x, int y, uint16_t color) {
+	if (x < 0 || x >= display.width) return;
+	if (y < 0 || y >= display.height) return;
+
+	uint16_t reversed_color = color;
+	display.frame_buffer[x + display.width * y] = reversed_color;
+}
+
+void mcugdx_display_hline(int32_t x1, int32_t x2, int32_t y, uint32_t color) {
+	if (x1 > x2) {
+		int32_t tmp = x2;
+		x2 = x1;
+		x1 = tmp;
+	}
+
+	if (x1 >= display.width) return;
+	if (x2 < 0) return;
+	if (y < 0) return;
+	if (y >= display.height) return;
+
+	if (x1 < 0) x1 = 0;
+	if (x2 >= display.width) x2 = display.width - 1;
+
+	uint16_t reversed_color = reverse_color(color);
+	uint16_t *pixels = display.frame_buffer + y * display.width + x1;
+	int32_t num_pixels = x2 - x1 + 1;
+	while (num_pixels--) {
+		*pixels++ = reversed_color;
+	}
+}
+
+void mcugdx_display_rect(int32_t x1, int32_t y1, int32_t width, int32_t height, uint32_t color) {
+	if (width <= 0) return;
+	if (height <= 0) return;
+
+	int32_t x2 = x1 + width - 1;
+	int32_t y2 = y1 + height - 1;
+
+	if (x1 >= display.width) return;
+	if (x2 < 0) return;
+	if (y1 >= display.height) return;
+	if (y2 < 0) return;
+
+	if (x1 < 0) x1 = 0;
+	if (y1 < 0) y1 = 0;
+	if (x2 >= display.width) x2 = display.width - 1;
+	if (y2 >= display.height) y2 = display.height - 1;
+
+	uint16_t reversed_color = reverse_color(color);
+	int32_t clipped_width = x2 - x1 + 1;
+	int32_t next_row = display.width - clipped_width;
+	uint16_t *pixel = display.frame_buffer + y1 * display.width + x1;
+	for (int32_t y = y1; y <= y2; y++) {
+		for (int32_t i = 0; i < clipped_width; i++) {
+			*pixel++ = reversed_color;
+		}
+		pixel += next_row;
+	}
+}
+
+void mcugdx_display_show() {
+	spi_write_command(display.spi_handle, display.dc, 0x2A);
+	spi_write_addr(display.spi_handle, display.dc, 0, display.width - 1);
+	spi_write_command(display.spi_handle, display.dc, 0x2B);
+	spi_write_addr(display.spi_handle, display.dc, 0, display.height - 1);
+	spi_write_command(display.spi_handle, display.dc, 0x2C);
+
+	uint32_t size = display.width * display.height * 2;
+	uint8_t *frame_buffer = (uint8_t *) display.frame_buffer;
+	gpio_set_level(display.dc, 1);
+	while (size > 0) {
+		uint16_t bs = (size > BUFFER_SIZE) ? BUFFER_SIZE : size;
+		spi_write_bytes(display.spi_handle, frame_buffer, bs);
+		size -= bs;
+		frame_buffer += bs;
+	}
+}
+
+int mcugdx_display_width() {
+	return display.width;
+}
+
+int mcugdx_display_height() {
+	return display.height;
+}
+
+uint16_t *mcugdx_display_frame_buffer() {
+	return display.frame_buffer;
+}
