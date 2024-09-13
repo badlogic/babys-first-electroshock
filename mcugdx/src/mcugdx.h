@@ -8,8 +8,10 @@ extern "C" {
 #include "display.h"
 #include "log.h"
 #include "mem.h"
+#include "files.h"
+#include "image.h"
 
-void mcugdx_init(mcugdx_display_config_t *display_config);
+void mcugdx_init(void);
 
 double mcugdx_time(void);
 

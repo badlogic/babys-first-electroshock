@@ -1,4 +1,5 @@
 #include "display.h"
+#include "log.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -6,13 +7,15 @@
 #include <stdio.h>
 #include "MiniFB_enums.h"
 
-#define reverse_color(color) (((color) >> 8) | ((color) << 8))
+#define TAG "mcugdx_display"
 
 uint32_t *frame_buffer_32;
 struct mfb_window *window;
 mcugdx_display_t display;
 
-void mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
+#define reverse_color(color) (((color) >> 8) | ((color) << 8))
+
+mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	display.native_width = display.width = display_cfg->native_width;
 	display.native_height = display.height = display_cfg->native_height;
 	display.orientation = MCUGDX_PORTRAIT;
@@ -21,6 +24,7 @@ void mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	window = NULL;
 
 	mcugdx_display_set_orientation(MCUGDX_PORTRAIT);
+	return window ? MCUGDX_OK : MCUGDX_ERROR;
 }
 
 void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
@@ -36,6 +40,7 @@ void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
 		mfb_update_events(window);
 	}
 	window = mfb_open_ex("mcugdx", display.width * 2, display.height * 2, 0);
+	if (!window) mcugdx_loge(TAG, "Could not create window");
 }
 
 void mcugdx_display_show(void) {

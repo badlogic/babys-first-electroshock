@@ -13,6 +13,8 @@ typedef enum {
 
 void *mcugdx_mem_alloc(size_t size, mcugdx_memory_type_t mem_type);
 
+void mcugdx_mem_free(void *ptr);
+
 void mcugdx_print_memory(void);
 
 #ifdef __cplusplus

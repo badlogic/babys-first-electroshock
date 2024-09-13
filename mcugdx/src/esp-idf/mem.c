@@ -10,6 +10,10 @@ void *mcugdx_mem_alloc(size_t size, mcugdx_memory_type_t mem_type) {
     return heap_caps_malloc(size, mem_type == MCUGDX_MEM_EXTERNAL ? MALLOC_CAP_SPIRAM : MALLOC_CAP_INTERNAL);
 }
 
+void mcugdx_mem_free(void *ptr) {
+    heap_caps_free(ptr);
+}
+
 void mcugdx_print_memory() {
 mcugdx_log(
         TAG,

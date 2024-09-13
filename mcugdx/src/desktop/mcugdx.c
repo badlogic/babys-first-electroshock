@@ -5,13 +5,12 @@
 
 struct mfb_timer *timer;
 
-void mcugdx_init(mcugdx_display_config_t *display_cfg) {
+void mcugdx_init(void) {
     timer = mfb_timer_create();
-    mcugdx_display_init(display_cfg);
 }
 
 double mcugdx_time(void) {
-    return mfb_timer_delta(timer);
+    return mfb_timer_now(timer);
 }
 
 extern void app_main(void);

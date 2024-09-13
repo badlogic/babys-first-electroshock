@@ -5,6 +5,8 @@
 #include "log.h"
 #include "mem.h"
 
+#define TAG "mcugdx_rofs"
+
 #ifdef ESP_PLATFORM
 #include "esp_partition.h"
 #else
@@ -57,12 +59,12 @@ uint8_t *rofs_read_file(const char *path, uint32_t *size, mcugdx_memory_type_t m
             uint32_t file_size = fs.files[i].size;
             uint8_t *copy = (uint8_t *)mcugdx_mem_alloc(file_size, mem_type);
             if (!copy) {
-                printf("Failed to allocate memory for file %s\n", path);
+                mcugdx_loge(TAG, "Failed to allocate memory for file %s\n", path);
                 return NULL;
             }
             if (esp_partition_read(partition, file_offset, copy, file_size) != ESP_OK) {
                 free(copy);
-                printf("Failed to read file %s\n", path);
+                mcugdx_loge(TAG, "Failed to read file %s\n", path);
                 return NULL;
             }
 
@@ -71,7 +73,7 @@ uint8_t *rofs_read_file(const char *path, uint32_t *size, mcugdx_memory_type_t m
         }
     }
 
-    printf("File not found: %s\n", path);
+    mcugdx_loge(TAG, "File not found: %s\n", path);
     return NULL;
 }
 
@@ -119,7 +121,7 @@ uint8_t *read_partition_file(void) {
 
     FILE *file = fopen(rofs_bin_path, "rb");
     if (!file) {
-        printf("Failed to open file: %s\n", rofs_bin_path);
+        mcugdx_loge(TAG, "Failed to open file: %s\n", rofs_bin_path);
         return NULL;
     }
 
@@ -127,9 +129,9 @@ uint8_t *read_partition_file(void) {
     long file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    uint8_t *partition = malloc(file_size);
+    uint8_t *partition = mcugdx_mem_alloc(file_size, MCUGDX_MEM_INTERNAL);
     if (!partition) {
-        printf("Failed to allocate memory.\n");
+        mcugdx_loge(TAG, "Failed to allocate memory.\n");
         fclose(file);
         return NULL;
     }
@@ -164,9 +166,9 @@ uint8_t *rofs_read_file(const char *path, uint32_t *size, mcugdx_memory_type_t m
             uint32_t file_size = fs.files[i].size;
             const uint8_t *data = partition + file_offset;
 
-            uint8_t *copy = (uint8_t *)malloc(file_size);
+            uint8_t *copy = (uint8_t *)mcugdx_mem_alloc(file_size, mem_type);
             if (!copy) {
-                printf("Failed to allocate memory for file\n");
+                mcugdx_loge(TAG, "Failed to allocate memory for file\n");
                 return NULL;
             }
 
@@ -176,7 +178,7 @@ uint8_t *rofs_read_file(const char *path, uint32_t *size, mcugdx_memory_type_t m
         }
     }
 
-    printf("File not found: %s\n", path);
+    mcugdx_loge(TAG, "File not found: %s\n", path);
     return NULL;
 }
 #endif
@@ -186,13 +188,13 @@ int rofs_init(void) {
     partition = esp_partition_find_first(
             ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "rofs");
     if (!partition) {
-        printf("Failed to find rofs partition");
+        mcugdx_loge(TAG, "Failed to find rofs partition");
         return 0;
     }
 #else
     partition = read_partition_file();
     if (!partition) {
-        printf("Failed to load rofs.bin");
+        mcugdx_loge(TAG, "Failed to load rofs.bin");
         return 0;
     }
 #endif

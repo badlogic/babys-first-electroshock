@@ -4,8 +4,7 @@
 
 #define TAG "MCUGDX"
 
-void mcugdx_init(mcugdx_display_config_t *display_cfg) {
-    mcugdx_display_init(display_cfg);
+void mcugdx_init() {
 }
 
 double mcugdx_time() {

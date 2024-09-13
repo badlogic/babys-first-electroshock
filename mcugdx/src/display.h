@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdint.h>
+#include "result.h"
+#include "image.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +37,7 @@ typedef struct {
 	uint16_t *frame_buffer;
 } mcugdx_display_t;
 
-void mcugdx_display_init(mcugdx_display_config_t *display_cfg);
+mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg);
 
 void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation);
 
@@ -45,9 +47,17 @@ void mcugdx_display_clear_color(uint16_t color);
 
 void mcugdx_display_set_pixel(int x, int y, uint16_t color);
 
-void mcugdx_display_hline(int32_t x1, int32_t x2, int32_t y, uint32_t color);
+void mcugdx_display_hline(int32_t x1, int32_t x2, int32_t y, uint16_t color);
 
-void mcugdx_display_rect(int32_t x1, int32_t y1, int32_t width, int32_t height, uint32_t color);
+void mcugdx_display_rect(int32_t x1, int32_t y1, int32_t width, int32_t height, uint16_t color);
+
+void mcugdx_display_blit(mcugdx_image_t *src, int32_t x, int32_t y);
+
+void mcugdx_display_blit_keyed(mcugdx_image_t *src, int32_t x, int32_t y, uint16_t color_key);
+
+void mcugdx_display_blit_region(mcugdx_image_t *src, int32_t dst_x, int32_t dst_y, int32_t src_x, int32_t src_y, int32_t src_width, int32_t src_height);
+
+void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_t dst_y, int32_t src_x, int32_t src_y, int32_t src_width, int32_t src_height, uint16_t color_key);
 
 void mcugdx_display_show(void);
 

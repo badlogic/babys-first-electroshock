@@ -52,9 +52,20 @@
 #include "esp_heap_caps.h"
 #include "log.h"
 
+#define TAG "mcugdx_display"
+
 #define BUFFER_SIZE 4096
 
-#define TAG "mcugdx_display"
+#define MADCTL_MY 0x80 ///< Bottom to top
+#define MADCTL_MX 0x40 ///< Right to left
+#define MADCTL_MV 0x20 ///< Reverse Mode
+#define MADCTL_ML 0x10 ///< LCD refresh Bottom to top
+#define MADCTL_RGB 0x00///< Red-Green-Blue pixel order
+#define MADCTL_BGR 0x08///< Blue-Green-Red pixel order
+#define MADCTL_MH 0x04 ///< LCD refresh right to left
+#define MADCTL 0x36
+
+#define MADCTL_PIXEL_ORDER MADCTL_RGB
 
 mcugdx_display_t display;
 mcugdx_display_driver_t driver;
@@ -132,7 +143,7 @@ void init_st7789(spi_device_handle_t device, int dc) {
 	delay(10);
 
 	spi_write_command(device, dc, 0x36);//Memory Data Access Control
-	spi_write_data_byte(device, dc, 0x00);
+	spi_write_data_byte(device, dc, MADCTL_PIXEL_ORDER);
 
 	spi_write_command(device, dc, 0x2A);//Column Address Set
 	spi_write_data_byte(device, dc, 0x00);
@@ -171,7 +182,7 @@ void init_ili9143(spi_device_handle_t device, int dc) {
 	spi_write_data_byte(device, dc, 0x86);
 
 	spi_write_command(device, dc, 0x36);  //Memory Access Control
-	spi_write_data_byte(device, dc, 0x08);//Right top start, BGR color filter panel
+	spi_write_data_byte(device, dc, MADCTL_PIXEL_ORDER);//Right top start, BGR color filter panel
 	//spi_write_data_byte(device, dc, 0x00);//Right top start, RGB color filter panel
 
 	spi_write_command(device, dc, 0x3A);  //Pixel Format Set
@@ -232,7 +243,7 @@ void init_ili9143(spi_device_handle_t device, int dc) {
 	spi_write_command(device, dc, 0x29);//Display ON
 }
 
-void mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
+mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	// Setup SPI2 bus
 	spi_bus_config_t bus_config = {
 			.mosi_io_num = display_cfg->mosi,
@@ -249,7 +260,9 @@ void mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 
 	esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_config, SPI_DMA_CH_AUTO);
 	mcugdx_log(TAG, "Initialized SPI bus %d", ret);
-	assert(ret == ESP_OK);
+	if (ret != ESP_OK) {
+		return MCUGDX_ERROR;
+	}
 
 	// Setup up display device, starting with CS and DC pins followed by adding the SPI device
 	if (display_cfg->cs >= 0) pin_mode(display_cfg->cs, GPIO_MODE_OUTPUT, 0);
@@ -266,6 +279,7 @@ void mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			break;
 		default:
 			mcugdx_loge(TAG, "Unknown display driver %i", display_cfg->driver);
+			return MCUGDX_ERROR;
 	}
 	device_config.queue_size = 7;
 	device_config.mode = 3;
@@ -293,37 +307,25 @@ void mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			break;
 		default:
 			mcugdx_loge(TAG, "Unknown display driver %i", driver);
+			return MCUGDX_ERROR;
 	}
 
 	// Set orientation to portrait by default
 	mcugdx_display_set_orientation(MCUGDX_PORTRAIT);
+	return MCUGDX_OK;
 }
-
-#define MADCTL_MY 0x80 ///< Bottom to top
-#define MADCTL_MX 0x40 ///< Right to left
-#define MADCTL_MV 0x20 ///< Reverse Mode
-#define MADCTL_ML 0x10 ///< LCD refresh Bottom to top
-#define MADCTL_RGB 0x00///< Red-Green-Blue pixel order
-#define MADCTL_BGR 0x08///< Blue-Green-Red pixel order
-#define MADCTL_MH 0x04 ///< LCD refresh right to left
-#define MADCTL 0x36
-
-#define ILI9341_TFTWIDTH 240
-#define ILI9341_TFTHEIGHT 320
-#define ST7789_TFT_WIDTH 240
-#define ST7789_TFT_HEIGHT 320
 
 void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
 	uint8_t madctl = orientation = orientation % 4;
 
 	switch (orientation) {
 		case MCUGDX_PORTRAIT:
-			madctl = (MADCTL_MY | MADCTL_BGR);
+			madctl = (MADCTL_MY | MADCTL_PIXEL_ORDER);
 			display.width = display.native_width;
 			display.height = display.native_height;
 			break;
 		case MCUGDX_LANDSCAPE:
-			madctl = (MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+			madctl = (MADCTL_MY | MADCTL_MV | MADCTL_PIXEL_ORDER);
 			display.width = display.native_height;
 			display.height = display.native_width;
 			break;
