@@ -109,8 +109,8 @@ void mcugdx_display_blit(mcugdx_image_t *src, int32_t x, int32_t y) {
 
     for (int32_t row = 0; row < clipped_height; row++) {
         memcpy(dst_pixel, src_pixel, clipped_width * sizeof(uint16_t));
-        dst_pixel += display.width;  // Move to the next row in the display
-        src_pixel += src->width;     // Move to the next row in the source image
+        dst_pixel += display.width;
+        src_pixel += src->width;
     }
 }
 
