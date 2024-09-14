@@ -8,6 +8,7 @@
 #define BLUE 0b11111
 #define BLACK 0x0
 #define WHITE 0xffff
+#define PINK 0b1111100000011111
 
 // Little blue fucker
 #if 1
@@ -61,14 +62,22 @@ struct box_t {
 };
 
 extern "C" void app_main() {
-	mcugdx_print_memory();
+	void *ptr = mcugdx_mem_alloc(10, MCUGDX_MEM_INTERNAL);
+	mcugdx_mem_free(ptr);
+
+	mcugdx_mem_print();
 	mcugdx_init();
 	mcugdx_display_init(&display_config);
-	mcugdx_print_memory();
+	mcugdx_mem_print();
 	mcugdx_display_set_orientation(MCUGDX_LANDSCAPE);
 	mcugdx_rofs_init();
 
-	mcugdx_image_t *bear = mcugdx_image_load("bear.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
+	mcugdx_mem_print();
+
+	double load_start = mcugdx_time();
+	mcugdx_image_t *bear = mcugdx_image_load("bear.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
+	mcugdx_log(TAG, "Load took: %f\n", (mcugdx_time() - load_start));
+	mcugdx_mem_print();
 
 	box_t boxes[] = {
 			{.x = 0, .y = 0, .vx = 1, .vy = 0, .width = 30, .height = 30, .color = RED, .image = NULL},
@@ -78,7 +87,8 @@ extern "C" void app_main() {
 	int frame = 0;
 	while (true) {
 		double start_time = mcugdx_time();
-		mcugdx_display_clear_color(BLACK);
+		mcugdx_display_clear_color(PINK);
+		double end_clear = mcugdx_time();
 
 		for (int i = 0; i < 4; i++) {
 			box_t *box = &boxes[i];
@@ -86,7 +96,8 @@ extern "C" void app_main() {
 			if (!box->image) {
 				mcugdx_display_rect(box->x, box->y, box->width, box->height, box->color);
 			} else {
-				mcugdx_display_blit_keyed(box->image, box->x, box->y, 0);
+				for (int j = 0; j < 100; j++)
+				mcugdx_display_blit_region_keyed(box->image, box->x, box->y, 0, 0, 64, 64, 0);
 			}
 		}
 
@@ -95,10 +106,11 @@ extern "C" void app_main() {
 		frame++;
 		if (frame % 30 == 0) {
 			double time = mcugdx_time();
+			double clear = end_clear - start_time;
 			double draw = show_time - start_time;
 			double show = time - show_time;
 			double total = time - start_time;
-			mcugdx_log(TAG, "draw: %.3f ms, show: %.3f ms, total: %.3f ms\n", (draw * 1000), (show * 1000), (total * 1000));
+			mcugdx_log(TAG, "clear: %.3f, draw: %.3f ms, show: %.3f ms, total: %.3f ms\n", (clear * 1000), (draw * 1000), (show * 1000), (total * 1000));
 		}
 	}
 }

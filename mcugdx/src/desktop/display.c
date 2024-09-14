@@ -13,7 +13,7 @@ uint32_t *frame_buffer_32;
 struct mfb_window *window;
 mcugdx_display_t display;
 
-#define reverse_color(color) (((color) >> 8) | ((color) << 8))
+extern size_t internal_mem;
 
 mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	display.native_width = display.width = display_cfg->native_width;
@@ -40,7 +40,7 @@ void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
 		mfb_update_events(window);
 	}
 	window = mfb_open_ex("mcugdx", display.width * 2, display.height * 2, 0);
-	if (!window) mcugdx_loge(TAG, "Could not create window");
+	if (!window) mcugdx_loge(TAG, "Could not create window\n");
 }
 
 void mcugdx_display_show(void) {
@@ -49,7 +49,7 @@ void mcugdx_display_show(void) {
 	int num_pixels = display.width * display.height;
 
 	for (int i = 0; i < num_pixels; i++) {
-		uint16_t pixel = reverse_color(src[i]);
+		uint16_t pixel = swap_bytes(src[i]);
 
 		uint8_t r = (pixel >> 11) & 0x1F;
 		uint8_t g = (pixel >> 5) & 0x3F;

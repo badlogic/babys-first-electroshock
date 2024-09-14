@@ -8,32 +8,34 @@
 extern "C" {
 #endif
 
+#define swap_bytes(color) __builtin_bswap16(color)
+
 typedef enum {
-    MCUGDX_ST7789,
-    MCUGDX_ILI9341
+	MCUGDX_ST7789,
+	MCUGDX_ILI9341
 } mcugdx_display_driver_t;
 
 typedef enum {
-    MCUGDX_PORTRAIT,
-    MCUGDX_LANDSCAPE
+	MCUGDX_PORTRAIT,
+	MCUGDX_LANDSCAPE
 } mcugdx_display_orientation_t;
 
 typedef struct {
-    mcugdx_display_driver_t driver;
-    int native_width;
-    int native_height;
-    int mosi;
-    int sck;
-    int dc;
-    int cs;
+	mcugdx_display_driver_t driver;
+	uint32_t native_width;
+	uint32_t native_height;
+	int mosi;
+	int sck;
+	int dc;
+	int cs;
 } mcugdx_display_config_t;
 
 typedef struct {
-	int native_width;
-	int native_height;
+	uint32_t native_width;
+	uint32_t native_height;
 	mcugdx_display_orientation_t orientation;
-	int width;
-	int height;
+	uint32_t width;
+	uint32_t height;
 	uint16_t *frame_buffer;
 } mcugdx_display_t;
 
@@ -45,7 +47,7 @@ void mcugdx_display_clear(void);
 
 void mcugdx_display_clear_color(uint16_t color);
 
-void mcugdx_display_set_pixel(int x, int y, uint16_t color);
+void mcugdx_display_set_pixel(int32_t x, int32_t y, uint16_t color);
 
 void mcugdx_display_hline(int32_t x1, int32_t x2, int32_t y, uint16_t color);
 

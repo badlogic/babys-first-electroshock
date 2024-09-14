@@ -67,6 +67,8 @@
 
 #define MADCTL_PIXEL_ORDER MADCTL_RGB
 
+extern size_t internal_mem;
+
 mcugdx_display_t display;
 mcugdx_display_driver_t driver;
 int dc;
@@ -181,7 +183,7 @@ void init_ili9143(spi_device_handle_t device, int dc) {
 	spi_write_command(device, dc, 0xC7);//VCOM Control 2
 	spi_write_data_byte(device, dc, 0x86);
 
-	spi_write_command(device, dc, 0x36);  //Memory Access Control
+	spi_write_command(device, dc, 0x36);                //Memory Access Control
 	spi_write_data_byte(device, dc, MADCTL_PIXEL_ORDER);//Right top start, BGR color filter panel
 	//spi_write_data_byte(device, dc, 0x00);//Right top start, RGB color filter panel
 
@@ -259,10 +261,10 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			.flags = 0};
 
 	esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_config, SPI_DMA_CH_AUTO);
-	mcugdx_log(TAG, "Initialized SPI bus %d", ret);
 	if (ret != ESP_OK) {
 		return MCUGDX_ERROR;
 	}
+	mcugdx_log(TAG, "Initialized SPI bus\n");
 
 	// Setup up display device, starting with CS and DC pins followed by adding the SPI device
 	if (display_cfg->cs >= 0) pin_mode(display_cfg->cs, GPIO_MODE_OUTPUT, 0);
@@ -278,7 +280,7 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			device_config.clock_speed_hz = SPI_MASTER_FREQ_40M;
 			break;
 		default:
-			mcugdx_loge(TAG, "Unknown display driver %i", display_cfg->driver);
+			mcugdx_loge(TAG, "Unknown display driver %i\n", display_cfg->driver);
 			return MCUGDX_ERROR;
 	}
 	device_config.queue_size = 7;
@@ -287,7 +289,7 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	device_config.spics_io_num = display_cfg->cs >= 0 ? display_cfg->cs : -1;
 
 	ret = spi_bus_add_device(SPI2_HOST, &device_config, &spi_handle);
-	mcugdx_log(TAG, "Added SPI display device %d", ret);
+	mcugdx_log(TAG, "Added SPI display device\n");
 
 	// Setup internal display struct
 	driver = display_cfg->driver;
@@ -296,6 +298,7 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	display.orientation = MCUGDX_PORTRAIT;
 	dc = display_cfg->dc;
 	display.frame_buffer = heap_caps_calloc(display.width * display.height * sizeof(uint16_t), 1, MALLOC_CAP_DMA);
+	internal_mem += display.width * display.height * sizeof(uint16_t);
 
 	// Send init commands to display
 	switch (driver) {
@@ -306,7 +309,7 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			init_ili9143(spi_handle, dc);
 			break;
 		default:
-			mcugdx_loge(TAG, "Unknown display driver %i", driver);
+			mcugdx_loge(TAG, "Unknown display driver %i\n", driver);
 			return MCUGDX_ERROR;
 	}
 
@@ -330,7 +333,7 @@ void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
 			display.height = display.native_width;
 			break;
 		default:
-			mcugdx_loge(TAG, "Unsupported display orientation %i", orientation);
+			mcugdx_loge(TAG, "Unsupported display orientation %i\n", orientation);
 	}
 	spi_write_command(spi_handle, dc, MADCTL);
 	spi_write_data_byte(spi_handle, dc, madctl);

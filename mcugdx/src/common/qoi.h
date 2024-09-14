@@ -214,6 +214,10 @@ Header - Public functions */
 #ifndef QOI_H
 #define QOI_H
 
+#include "mem.h"
+
+#define QOI_NO_STDIO
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -286,7 +290,7 @@ is filled with the description from the file header.
 
 The returned pixel data should be free()d after use. */
 
-void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels);
+void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels, mcugdx_memory_type_t mem_type);
 
 
 #ifdef __cplusplus
@@ -485,10 +489,10 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 	return bytes;
 }
 
-void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels) {
+void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels, mcugdx_memory_type_t mem_type) {
 	const unsigned char *bytes;
 	unsigned int header_magic;
-	unsigned char *pixels;
+	uint16_t *pixels;
 	qoi_rgba_t index[64];
 	qoi_rgba_t px;
 	int px_len, chunks_len, px_pos;
@@ -524,8 +528,8 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels) {
 		channels = desc->channels;
 	}
 
-	px_len = desc->width * desc->height * channels;
-	pixels = (unsigned char *) QOI_MALLOC(px_len);
+	px_len = desc->width * desc->height;
+	pixels = (uint16_t *) mcugdx_mem_alloc(px_len * sizeof(uint16_t), mem_type);
 	if (!pixels) {
 		return NULL;
 	}
@@ -537,7 +541,7 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels) {
 	px.rgba.a = 255;
 
 	chunks_len = size - (int)sizeof(qoi_padding);
-	for (px_pos = 0; px_pos < px_len; px_pos += channels) {
+	for (px_pos = 0; px_pos < px_len; px_pos++) {
 		if (run > 0) {
 			run--;
 		}
@@ -577,13 +581,10 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels) {
 			index[QOI_COLOR_HASH(px) % 64] = px;
 		}
 
-		pixels[px_pos + 0] = px.rgba.r;
-		pixels[px_pos + 1] = px.rgba.g;
-		pixels[px_pos + 2] = px.rgba.b;
-
-		if (channels == 4) {
-			pixels[px_pos + 3] = px.rgba.a;
-		}
+		uint8_t r = px.rgba.r >> 3;
+        uint8_t g = px.rgba.g >> 2;
+        uint8_t b = px.rgba.b >> 3;
+        pixels[px_pos] = __builtin_bswap16((r << 11) | (g << 5) | b);
 	}
 
 	return pixels;
