@@ -1,8 +1,3 @@
-get_cmake_property(cache_vars CACHE_VARIABLES)
-foreach (cache_var ${cache_vars})
-    message(STATUS "${cache_var} = ${${cache_var}}")
-endforeach()
-
 if(DEFINED ESP_PLATFORM)
     idf_component_register(
         SRC_DIRS "src/common" "src/esp-idf"
@@ -37,6 +32,14 @@ file(GLOB DESKTOP_SOURCES "src/desktop/*.c")
 add_library(mcugdx  ${COMMON_SOURCES} ${DESKTOP_SOURCES})
 target_include_directories(mcugdx PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(mcugdx PUBLIC minifb)
+
+if(APPLE)
+    find_library(AUDIOTOOLBOX AudioToolbox)
+    if(NOT AUDIOTOOLBOX)
+        message(FATAL_ERROR "AudioToolbox framework not found")
+    endif()
+    target_link_libraries(mcugdx PUBLIC ${AUDIOTOOLBOX})
+endif()
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/project_include.cmake")
 

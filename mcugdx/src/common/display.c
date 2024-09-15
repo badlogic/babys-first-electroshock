@@ -244,7 +244,6 @@ void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_
 
 	uint32_t *dst_pixel32 = (uint32_t *) (display.frame_buffer + dst_y * display.width + dst_x);
 	uint32_t *src_pixel32 = (uint32_t *) (src->pixels + src_y * src->width + src_x);
-	uint32_t color_key32 = ((uint32_t) color_key << 16) | color_key;
 
 	int32_t dst_stride = display.width / 2;
 	int32_t src_stride = src->width / 2;
@@ -266,7 +265,6 @@ void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_
 		}
 		if (x < clipped_width) {
 			uint16_t src_color = ((uint16_t *) src_pixel32)[0];
-			uint16_t dst_color = ((uint16_t *) dst_pixel32)[0];
 			if (src_color != color_key) {
 				((uint16_t *) dst_pixel32)[0] = src_color;
 			}

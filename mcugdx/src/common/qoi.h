@@ -234,7 +234,7 @@ You may use the constants QOI_SRGB or QOI_LINEAR. The colorspace is purely
 informative. It will be saved to the file header, but does not affect
 how chunks are en-/decoded. */
 
-#define QOI_SRGB   0
+#define QOI_SRGB 0
 #define QOI_LINEAR 1
 
 typedef struct {
@@ -307,40 +307,42 @@ Implementation */
 #include <string.h>
 
 #ifndef QOI_MALLOC
-	#define QOI_MALLOC(sz) malloc(sz)
-	#define QOI_FREE(p)    free(p)
+#define QOI_MALLOC(sz) malloc(sz)
+#define QOI_FREE(p) free(p)
 #endif
 #ifndef QOI_ZEROARR
-	#define QOI_ZEROARR(a) memset((a),0,sizeof(a))
+#define QOI_ZEROARR(a) memset((a), 0, sizeof(a))
 #endif
 
-#define QOI_OP_INDEX  0x00 /* 00xxxxxx */
-#define QOI_OP_DIFF   0x40 /* 01xxxxxx */
-#define QOI_OP_LUMA   0x80 /* 10xxxxxx */
-#define QOI_OP_RUN    0xc0 /* 11xxxxxx */
-#define QOI_OP_RGB    0xfe /* 11111110 */
-#define QOI_OP_RGBA   0xff /* 11111111 */
+#define QOI_OP_INDEX 0x00 /* 00xxxxxx */
+#define QOI_OP_DIFF 0x40  /* 01xxxxxx */
+#define QOI_OP_LUMA 0x80  /* 10xxxxxx */
+#define QOI_OP_RUN 0xc0   /* 11xxxxxx */
+#define QOI_OP_RGB 0xfe   /* 11111110 */
+#define QOI_OP_RGBA 0xff  /* 11111111 */
 
-#define QOI_MASK_2    0xc0 /* 11000000 */
+#define QOI_MASK_2 0xc0 /* 11000000 */
 
-#define QOI_COLOR_HASH(C) (C.rgba.r*3 + C.rgba.g*5 + C.rgba.b*7 + C.rgba.a*11)
-#define QOI_MAGIC \
-	(((unsigned int)'q') << 24 | ((unsigned int)'o') << 16 | \
-	 ((unsigned int)'i') <<  8 | ((unsigned int)'f'))
+#define QOI_COLOR_HASH(C) (C.rgba.r * 3 + C.rgba.g * 5 + C.rgba.b * 7 + C.rgba.a * 11)
+#define QOI_MAGIC                                              \
+	(((unsigned int) 'q') << 24 | ((unsigned int) 'o') << 16 | \
+	 ((unsigned int) 'i') << 8 | ((unsigned int) 'f'))
 #define QOI_HEADER_SIZE 14
 
 /* 2GB is the max file size that this implementation can safely handle. We guard
 against anything larger than that, assuming the worst case with 5 bytes per
 pixel, rounded down to a nice clean value. 400 million pixels ought to be
 enough for anybody. */
-#define QOI_PIXELS_MAX ((unsigned int)400000000)
+#define QOI_PIXELS_MAX ((unsigned int) 400000000)
 
 typedef union {
-	struct { unsigned char r, g, b, a; } rgba;
+	struct {
+		unsigned char r, g, b, a;
+	} rgba;
 	unsigned int v;
 } qoi_rgba_t;
 
-static const unsigned char qoi_padding[8] = {0,0,0,0,0,0,0,1};
+static const unsigned char qoi_padding[8] = {0, 0, 0, 0, 0, 0, 0, 1};
 
 static void qoi_write_32(unsigned char *bytes, int *p, unsigned int v) {
 	bytes[(*p)++] = (0xff000000 & v) >> 24;
@@ -366,18 +368,17 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 	qoi_rgba_t px, px_prev;
 
 	if (
-		data == NULL || out_len == NULL || desc == NULL ||
-		desc->width == 0 || desc->height == 0 ||
-		desc->channels < 3 || desc->channels > 4 ||
-		desc->colorspace > 1 ||
-		desc->height >= QOI_PIXELS_MAX / desc->width
-	) {
+			data == NULL || out_len == NULL || desc == NULL ||
+			desc->width == 0 || desc->height == 0 ||
+			desc->channels < 3 || desc->channels > 4 ||
+			desc->colorspace > 1 ||
+			desc->height >= QOI_PIXELS_MAX / desc->width) {
 		return NULL;
 	}
 
 	max_size =
-		desc->width * desc->height * (desc->channels + 1) +
-		QOI_HEADER_SIZE + sizeof(qoi_padding);
+			desc->width * desc->height * (desc->channels + 1) +
+			QOI_HEADER_SIZE + sizeof(qoi_padding);
 
 	p = 0;
 	bytes = (unsigned char *) QOI_MALLOC(max_size);
@@ -392,7 +393,7 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 	bytes[p++] = desc->colorspace;
 
 
-	pixels = (const unsigned char *)data;
+	pixels = (const unsigned char *) data;
 
 	QOI_ZEROARR(index);
 
@@ -422,8 +423,7 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 				bytes[p++] = QOI_OP_RUN | (run - 1);
 				run = 0;
 			}
-		}
-		else {
+		} else {
 			int index_pos;
 
 			if (run > 0) {
@@ -435,8 +435,7 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 
 			if (index[index_pos].v == px.v) {
 				bytes[p++] = QOI_OP_INDEX | index_pos;
-			}
-			else {
+			} else {
 				index[index_pos] = px;
 
 				if (px.rgba.a == px_prev.rgba.a) {
@@ -448,28 +447,23 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 					signed char vg_b = vb - vg;
 
 					if (
-						vr > -3 && vr < 2 &&
-						vg > -3 && vg < 2 &&
-						vb > -3 && vb < 2
-					) {
+							vr > -3 && vr < 2 &&
+							vg > -3 && vg < 2 &&
+							vb > -3 && vb < 2) {
 						bytes[p++] = QOI_OP_DIFF | (vr + 2) << 4 | (vg + 2) << 2 | (vb + 2);
-					}
-					else if (
-						vg_r >  -9 && vg_r <  8 &&
-						vg   > -33 && vg   < 32 &&
-						vg_b >  -9 && vg_b <  8
-					) {
-						bytes[p++] = QOI_OP_LUMA     | (vg   + 32);
-						bytes[p++] = (vg_r + 8) << 4 | (vg_b +  8);
-					}
-					else {
+					} else if (
+							vg_r > -9 && vg_r < 8 &&
+							vg > -33 && vg < 32 &&
+							vg_b > -9 && vg_b < 8) {
+						bytes[p++] = QOI_OP_LUMA | (vg + 32);
+						bytes[p++] = (vg_r + 8) << 4 | (vg_b + 8);
+					} else {
 						bytes[p++] = QOI_OP_RGB;
 						bytes[p++] = px.rgba.r;
 						bytes[p++] = px.rgba.g;
 						bytes[p++] = px.rgba.b;
 					}
-				}
-				else {
+				} else {
 					bytes[p++] = QOI_OP_RGBA;
 					bytes[p++] = px.rgba.r;
 					bytes[p++] = px.rgba.g;
@@ -481,7 +475,7 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 		px_prev = px;
 	}
 
-	for (i = 0; i < (int)sizeof(qoi_padding); i++) {
+	for (i = 0; i < (int) sizeof(qoi_padding); i++) {
 		bytes[p++] = qoi_padding[i];
 	}
 
@@ -499,14 +493,13 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels, mcugd
 	int p = 0, run = 0;
 
 	if (
-		data == NULL || desc == NULL ||
-		(channels != 0 && channels != 3 && channels != 4) ||
-		size < QOI_HEADER_SIZE + (int)sizeof(qoi_padding)
-	) {
+			data == NULL || desc == NULL ||
+			(channels != 0 && channels != 3 && channels != 4) ||
+			size < QOI_HEADER_SIZE + (int) sizeof(qoi_padding)) {
 		return NULL;
 	}
 
-	bytes = (const unsigned char *)data;
+	bytes = (const unsigned char *) data;
 
 	header_magic = qoi_read_32(bytes, &p);
 	desc->width = qoi_read_32(bytes, &p);
@@ -515,12 +508,11 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels, mcugd
 	desc->colorspace = bytes[p++];
 
 	if (
-		desc->width == 0 || desc->height == 0 ||
-		desc->channels < 3 || desc->channels > 4 ||
-		desc->colorspace > 1 ||
-		header_magic != QOI_MAGIC ||
-		desc->height >= QOI_PIXELS_MAX / desc->width
-	) {
+			desc->width == 0 || desc->height == 0 ||
+			desc->channels < 3 || desc->channels > 4 ||
+			desc->colorspace > 1 ||
+			header_magic != QOI_MAGIC ||
+			desc->height >= QOI_PIXELS_MAX / desc->width) {
 		return NULL;
 	}
 
@@ -540,41 +532,35 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels, mcugd
 	px.rgba.b = 0;
 	px.rgba.a = 255;
 
-	chunks_len = size - (int)sizeof(qoi_padding);
+	chunks_len = size - (int) sizeof(qoi_padding);
 	for (px_pos = 0; px_pos < px_len; px_pos++) {
 		if (run > 0) {
 			run--;
-		}
-		else if (p < chunks_len) {
+		} else if (p < chunks_len) {
 			int b1 = bytes[p++];
 
 			if (b1 == QOI_OP_RGB) {
 				px.rgba.r = bytes[p++];
 				px.rgba.g = bytes[p++];
 				px.rgba.b = bytes[p++];
-			}
-			else if (b1 == QOI_OP_RGBA) {
+			} else if (b1 == QOI_OP_RGBA) {
 				px.rgba.r = bytes[p++];
 				px.rgba.g = bytes[p++];
 				px.rgba.b = bytes[p++];
 				px.rgba.a = bytes[p++];
-			}
-			else if ((b1 & QOI_MASK_2) == QOI_OP_INDEX) {
+			} else if ((b1 & QOI_MASK_2) == QOI_OP_INDEX) {
 				px = index[b1];
-			}
-			else if ((b1 & QOI_MASK_2) == QOI_OP_DIFF) {
+			} else if ((b1 & QOI_MASK_2) == QOI_OP_DIFF) {
 				px.rgba.r += ((b1 >> 4) & 0x03) - 2;
 				px.rgba.g += ((b1 >> 2) & 0x03) - 2;
-				px.rgba.b += ( b1       & 0x03) - 2;
-			}
-			else if ((b1 & QOI_MASK_2) == QOI_OP_LUMA) {
+				px.rgba.b += (b1 & 0x03) - 2;
+			} else if ((b1 & QOI_MASK_2) == QOI_OP_LUMA) {
 				int b2 = bytes[p++];
 				int vg = (b1 & 0x3f) - 32;
 				px.rgba.r += vg - 8 + ((b2 >> 4) & 0x0f);
 				px.rgba.g += vg;
-				px.rgba.b += vg - 8 +  (b2       & 0x0f);
-			}
-			else if ((b1 & QOI_MASK_2) == QOI_OP_RUN) {
+				px.rgba.b += vg - 8 + (b2 & 0x0f);
+			} else if ((b1 & QOI_MASK_2) == QOI_OP_RUN) {
 				run = (b1 & 0x3f);
 			}
 
@@ -582,9 +568,9 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels, mcugd
 		}
 
 		uint8_t r = px.rgba.r >> 3;
-        uint8_t g = px.rgba.g >> 2;
-        uint8_t b = px.rgba.b >> 3;
-        pixels[px_pos] = __builtin_bswap16((r << 11) | (g << 5) | b);
+		uint8_t g = px.rgba.g >> 2;
+		uint8_t b = px.rgba.b >> 3;
+		pixels[px_pos] = __builtin_bswap16((r << 11) | (g << 5) | b);
 	}
 
 	return pixels;

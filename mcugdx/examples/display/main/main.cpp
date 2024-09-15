@@ -62,9 +62,6 @@ struct box_t {
 };
 
 extern "C" void app_main() {
-	void *ptr = mcugdx_mem_alloc(10, MCUGDX_MEM_INTERNAL);
-	mcugdx_mem_free(ptr);
-
 	mcugdx_mem_print();
 	mcugdx_init();
 	mcugdx_display_init(&display_config);
@@ -76,7 +73,7 @@ extern "C" void app_main() {
 
 	double load_start = mcugdx_time();
 	mcugdx_image_t *bear = mcugdx_image_load("bear.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
-	mcugdx_log(TAG, "Load took: %f\n", (mcugdx_time() - load_start));
+	mcugdx_log(TAG, "Load took: %f", (mcugdx_time() - load_start));
 	mcugdx_mem_print();
 
 	box_t boxes[] = {
@@ -110,7 +107,7 @@ extern "C" void app_main() {
 			double draw = show_time - start_time;
 			double show = time - show_time;
 			double total = time - start_time;
-			mcugdx_log(TAG, "clear: %.3f, draw: %.3f ms, show: %.3f ms, total: %.3f ms\n", (clear * 1000), (draw * 1000), (show * 1000), (total * 1000));
+			mcugdx_log(TAG, "clear: %.3f, draw: %.3f ms, show: %.3f ms, total: %.3f ms", (clear * 1000), (draw * 1000), (show * 1000), (total * 1000));
 		}
 	}
 }

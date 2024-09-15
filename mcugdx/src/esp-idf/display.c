@@ -70,10 +70,9 @@
 extern size_t internal_mem;
 
 mcugdx_display_t display;
-mcugdx_display_driver_t driver;
-int dc;
-spi_device_handle_t spi_handle;
-uint16_t *frame_buffer;
+static mcugdx_display_driver_t driver;
+static int dc;
+static spi_device_handle_t spi_handle;
 
 void pin_mode(int pin, gpio_mode_t mode, int level) {
 	gpio_reset_pin(pin);
@@ -264,7 +263,7 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	if (ret != ESP_OK) {
 		return MCUGDX_ERROR;
 	}
-	mcugdx_log(TAG, "Initialized SPI bus\n");
+	mcugdx_log(TAG, "Initialized SPI bus");
 
 	// Setup up display device, starting with CS and DC pins followed by adding the SPI device
 	if (display_cfg->cs >= 0) pin_mode(display_cfg->cs, GPIO_MODE_OUTPUT, 0);
@@ -289,7 +288,7 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	device_config.spics_io_num = display_cfg->cs >= 0 ? display_cfg->cs : -1;
 
 	ret = spi_bus_add_device(SPI2_HOST, &device_config, &spi_handle);
-	mcugdx_log(TAG, "Added SPI display device\n");
+	mcugdx_log(TAG, "Added SPI display device");
 
 	// Setup internal display struct
 	driver = display_cfg->driver;

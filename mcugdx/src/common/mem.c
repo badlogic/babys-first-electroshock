@@ -12,7 +12,6 @@
 
 #define TAG "mcugdx_mem"
 
-// Use 64-bit for size and type on 64-bit platforms, 32-bit on 32-bit platforms
 #if UINTPTR_MAX == 0xffffffff
 typedef uint32_t mem_info_t;
 #define ALIGNMENT 4
@@ -28,6 +27,7 @@ size_t internal_mem = 0;
 size_t external_mem = 0;
 
 void *mcugdx_mem_alloc(size_t size, mcugdx_memory_type_t mem_type) {
+	// FIXME the address of the payload should be 64-byte aligned for external PSRAM for better cache performance.
 	size_t total_size = size + sizeof(mem_info_t);
 
 #ifdef ESP_PLATFORM
@@ -36,7 +36,7 @@ void *mcugdx_mem_alloc(size_t size, mcugdx_memory_type_t mem_type) {
 	mem_info_t *info = (mem_info_t *) malloc(total_size);
 #endif
 	if (info == NULL) {
-		return NULL;// Out of memory
+		return NULL;
 	}
 
 	*info = (total_size & SIZE_MASK) | (mem_type == MCUGDX_MEM_INTERNAL ? 0 : MEM_TYPE_MASK);
@@ -81,7 +81,7 @@ size_t mcugdx_mem_external_usage(void) {
 }
 
 void mcugdx_mem_print(void) {
-	mcugdx_log(TAG, "internal: %i, external %i\n", internal_mem, external_mem);
+	mcugdx_log(TAG, "internal: %i, external %i", internal_mem, external_mem);
 #ifdef ESP_PLATFORM
 	mcugdx_log(
 			TAG,
@@ -92,7 +92,7 @@ void mcugdx_mem_print(void) {
 			"  MALLOC_CAP_INTERNAL  %7zu bytes\n"
 			"  MALLOC_CAP_DEFAULT   %7zu bytes\n"
 			"  MALLOC_CAP_IRAM_8BIT %7zu bytes\n"
-			"  MALLOC_CAP_RETENTION %7zu bytes\n",
+			"  MALLOC_CAP_RETENTION %7zu bytes",
 			xPortGetFreeHeapSize(),
 			heap_caps_get_free_size(MALLOC_CAP_8BIT),
 			heap_caps_get_free_size(MALLOC_CAP_DMA),

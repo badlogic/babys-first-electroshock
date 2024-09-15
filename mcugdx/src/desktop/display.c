@@ -9,8 +9,8 @@
 
 #define TAG "mcugdx_display"
 
-uint32_t *frame_buffer_32;
-struct mfb_window *window;
+static uint32_t *frame_buffer_32;
+static struct mfb_window *window;
 mcugdx_display_t display;
 
 extern size_t internal_mem;
