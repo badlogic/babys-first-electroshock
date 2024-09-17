@@ -23,7 +23,6 @@ void mix_task(void *args) {
 	i2s_channel_enable(channel);
 
 	while (true) {
-		double start = mcugdx_time();
 		mcugdx_audio_mix(buffer, BUFFER_SIZE_IN_FRAMES, channels);
 		size_t written_bytes = 0;
 		while (written_bytes != buffer_size_in_bytes) {
@@ -32,7 +31,6 @@ void mix_task(void *args) {
 			written_bytes += wb;
 		}
 		vTaskDelay(pdMS_TO_TICKS(1));
-		mcugdx_log(TAG, "mix + send: %f", mcugdx_time() - start);
 	}
 }
 

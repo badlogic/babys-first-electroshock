@@ -16,6 +16,6 @@ void mcugdx_loge(const char *TAG, const char *format, ...) {
 	va_start(args, format);
 	fprintf(stderr, "[ERROR] [%s] ", TAG);
 	vfprintf(stderr, format, args);
-	printf("\n");
+	fprintf(stderr, "\n");
 	va_end(args);
 }

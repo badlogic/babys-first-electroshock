@@ -65,14 +65,13 @@
 #define MADCTL_MH 0x04 ///< LCD refresh right to left
 #define MADCTL 0x36
 
-#define MADCTL_PIXEL_ORDER MADCTL_RGB
-
 extern size_t internal_mem;
 
 mcugdx_display_t display;
 static mcugdx_display_driver_t driver;
 static int dc;
 static spi_device_handle_t spi_handle;
+static uint8_t pixel_order = MADCTL_RGB;
 
 void pin_mode(int pin, gpio_mode_t mode, int level) {
 	gpio_reset_pin(pin);
@@ -144,7 +143,7 @@ void init_st7789(spi_device_handle_t device, int dc) {
 	delay(10);
 
 	spi_write_command(device, dc, 0x36);//Memory Data Access Control
-	spi_write_data_byte(device, dc, MADCTL_PIXEL_ORDER);
+	spi_write_data_byte(device, dc, pixel_order);
 
 	spi_write_command(device, dc, 0x2A);//Column Address Set
 	spi_write_data_byte(device, dc, 0x00);
@@ -183,7 +182,7 @@ void init_ili9143(spi_device_handle_t device, int dc) {
 	spi_write_data_byte(device, dc, 0x86);
 
 	spi_write_command(device, dc, 0x36);                //Memory Access Control
-	spi_write_data_byte(device, dc, MADCTL_PIXEL_ORDER);//Right top start, BGR color filter panel
+	spi_write_data_byte(device, dc, pixel_order);//Right top start, BGR color filter panel
 	//spi_write_data_byte(device, dc, 0x00);//Right top start, RGB color filter panel
 
 	spi_write_command(device, dc, 0x3A);  //Pixel Format Set
@@ -269,14 +268,28 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	if (display_cfg->cs >= 0) pin_mode(display_cfg->cs, GPIO_MODE_OUTPUT, 0);
 	pin_mode(display_cfg->dc, GPIO_MODE_OUTPUT, 0);
 
+	if (display_cfg->reset >= 0) {
+		mcugdx_log(TAG, "Resetting display via pin %i", display_cfg->reset);
+		pin_mode(display_cfg->reset, GPIO_MODE_OUTPUT, 1);
+		delay(100);
+		gpio_set_level(display_cfg->reset, 1);
+		delay(100);
+		gpio_set_level(display_cfg->reset, 0);
+		delay(100);
+		gpio_set_level(display_cfg->reset, 1);
+		delay(100);
+	}
+
 	spi_device_interface_config_t device_config;
 	memset(&device_config, 0, sizeof(device_config));
 	switch (display_cfg->driver) {
 		case MCUGDX_ST7789:
 			device_config.clock_speed_hz = SPI_MASTER_FREQ_80M;
+			pixel_order = MADCTL_RGB;
 			break;
 		case MCUGDX_ILI9341:
 			device_config.clock_speed_hz = SPI_MASTER_FREQ_40M;
+			pixel_order = MADCTL_BGR;
 			break;
 		default:
 			mcugdx_loge(TAG, "Unknown display driver %i\n", display_cfg->driver);
@@ -322,12 +335,12 @@ void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
 
 	switch (orientation) {
 		case MCUGDX_PORTRAIT:
-			madctl = (MADCTL_MY | MADCTL_PIXEL_ORDER);
+			madctl = (MADCTL_MY | pixel_order);
 			display.width = display.native_width;
 			display.height = display.native_height;
 			break;
 		case MCUGDX_LANDSCAPE:
-			madctl = (MADCTL_MY | MADCTL_MV | MADCTL_PIXEL_ORDER);
+			madctl = (MADCTL_MY | MADCTL_MV | pixel_order);
 			display.width = display.native_height;
 			display.height = display.native_width;
 			break;

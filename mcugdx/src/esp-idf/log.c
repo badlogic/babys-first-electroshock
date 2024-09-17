@@ -14,8 +14,8 @@ void mcugdx_log(const char *TAG, const char *format, ...) {
 void mcugdx_loge(const char *TAG, const char *format, ...) {
 	va_list args;
 	va_start(args, format);
-	printf("[%s] ", TAG);
+	fprintf(stderr, "[%s] ", TAG);
 	vfprintf(stderr, format, args);
-	printf("\n");
+	fprintf(stderr, "\n");
 	va_end(args);
 }

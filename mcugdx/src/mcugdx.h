@@ -11,6 +11,7 @@ extern "C" {
 #include "image.h"
 #include "audio.h"
 #include "display.h"
+#include "ultrasonic.h"
 
 void mcugdx_init(void);
 

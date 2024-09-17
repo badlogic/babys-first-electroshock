@@ -9,6 +9,12 @@ extern "C" {
 #endif
 
 #define swap_bytes(color) __builtin_bswap16(color)
+#define MCUGDX_RED 0b1111100000000000
+#define MCUGDX_GREEN 0b11111100000
+#define MCUGDX_BLUE 0b11111
+#define MCUGDX_BLACK 0x0
+#define MCUGDX_WHITE 0xffff
+#define MCUGDX_PINK 0b1111100000011111
 
 typedef enum {
 	MCUGDX_ST7789,
@@ -28,6 +34,7 @@ typedef struct {
 	int sck;
 	int dc;
 	int cs;
+	int reset;
 } mcugdx_display_config_t;
 
 typedef struct {

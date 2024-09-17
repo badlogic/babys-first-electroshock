@@ -142,32 +142,52 @@ void mcugdx_display_blit_keyed(mcugdx_image_t *src, int32_t x, int32_t y, uint16
 	uint32_t *dst_pixel32 = (uint32_t *) (display.frame_buffer + dst_y1 * display.width + dst_x1);
 	uint32_t *src_pixel32 = (uint32_t *) (src->pixels + src_y1 * src->width + src_x1);
 
-	for (int32_t y = dst_y1; y <= dst_y2; y++) {
-		int32_t x = 0;
-		for (; x < clipped_width - 1; x += 2) {
-			uint32_t src_colors = *src_pixel32++;
-			uint32_t dst_colors = *dst_pixel32;
+	uint32_t color_key32 = (color_key << 16) | (color_key);
+    for (int32_t y = dst_y1; y <= dst_y2; y++) {
+        int32_t x = 0;
+        for (; x < clipped_width - 3; x += 4) {
+            uint32_t src_colors1 = *src_pixel32++;
+            uint32_t src_colors2 = *src_pixel32++;
+            uint32_t dst_colors1 = *dst_pixel32;
+            uint32_t dst_colors2 = *(dst_pixel32 + 1);
 
-			if ((src_colors & 0xFFFF) != color_key) {
-				dst_colors = (dst_colors & 0xFFFF0000) | (src_colors & 0xFFFF);
-			}
-			if ((src_colors >> 16) != color_key) {
-				dst_colors = (dst_colors & 0x0000FFFF) | (src_colors & 0xFFFF0000);
-			}
+            if (src_colors1 != color_key32) {
+                if ((src_colors1 & 0xFFFF) != color_key) {
+                    dst_colors1 = (dst_colors1 & 0xFFFF0000) | (src_colors1 & 0xFFFF);
+                }
+                if ((src_colors1 >> 16) != color_key) {
+                    dst_colors1 = (dst_colors1 & 0x0000FFFF) | (src_colors1 & 0xFFFF0000);
+                }
+                *dst_pixel32++ = dst_colors1;
+            } else {
+                dst_pixel32++;
+            }
 
-			*dst_pixel32++ = dst_colors;
-		}
-		if (x < clipped_width) {
-			uint16_t src_color = ((uint16_t *) src_pixel32)[0];
-			if (src_color != color_key) {
-				((uint16_t *) dst_pixel32)[0] = src_color;
-			}
-			dst_pixel32 = (uint32_t *) ((uint16_t *) dst_pixel32 + 1);
-			src_pixel32 = (uint32_t *) ((uint16_t *) src_pixel32 + 1);
-		}
-		dst_pixel32 = (uint32_t *) ((uint16_t *) dst_pixel32 + dst_next_row);
-		src_pixel32 = (uint32_t *) ((uint16_t *) src_pixel32 + src_next_row);
-	}
+            if (src_colors2 != color_key32) {
+                if ((src_colors2 & 0xFFFF) != color_key) {
+                    dst_colors2 = (dst_colors2 & 0xFFFF0000) | (src_colors2 & 0xFFFF);
+                }
+                if ((src_colors2 >> 16) != color_key) {
+                    dst_colors2 = (dst_colors2 & 0x0000FFFF) | (src_colors2 & 0xFFFF0000);
+                }
+                *dst_pixel32++ = dst_colors2;
+            } else {
+                dst_pixel32++;
+            }
+        }
+
+        for (; x < clipped_width; x++) {
+            uint16_t src_color = ((uint16_t *) src_pixel32)[0];
+            if (src_color != color_key) {
+                ((uint16_t *) dst_pixel32)[0] = src_color;
+            }
+            dst_pixel32 = (uint32_t *) ((uint16_t *) dst_pixel32 + 1);
+            src_pixel32 = (uint32_t *) ((uint16_t *) src_pixel32 + 1);
+        }
+
+        dst_pixel32 = (uint32_t *) ((uint16_t *) dst_pixel32 + dst_next_row);
+        src_pixel32 = (uint32_t *) ((uint16_t *) src_pixel32 + src_next_row);
+    }
 }
 
 void mcugdx_display_blit_region(mcugdx_image_t *src, int32_t dst_x, int32_t dst_y, int32_t src_x, int32_t src_y, int32_t src_width, int32_t src_height) {

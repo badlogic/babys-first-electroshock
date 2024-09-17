@@ -27,6 +27,7 @@ endif()
 
 add_compile_options(-DDESKTOP_BUILD -Wall -Wextra -Wpedantic -Werror -Wno-implicit-fallthrough)
 
+# Library
 file(GLOB COMMON_SOURCES "src/common/*.c")
 file(GLOB DESKTOP_SOURCES "src/desktop/*.c")
 add_library(mcugdx  ${COMMON_SOURCES} ${DESKTOP_SOURCES})
@@ -41,6 +42,9 @@ if(APPLE)
     target_link_libraries(mcugdx PUBLIC ${AUDIOTOOLBOX})
 endif()
 
+# Tools
+
+# CMake extensions
 include("${CMAKE_CURRENT_SOURCE_DIR}/project_include.cmake")
 
 endif()

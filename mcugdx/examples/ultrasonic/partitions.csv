@@ -3,7 +3,4 @@
 nvs,data,nvs,,0x6000,,
 phy_init,data,phy,,0x1000,,
 factory,app,factory,,1M,,
-# Arduino Nano ESP32
-# rofs,data,undefined,,14M,,
-# Waveshare ESP32-S3-Zero
-rofs,data,undefined,,2M,,
+rofs,data,undefined,,1M,,
