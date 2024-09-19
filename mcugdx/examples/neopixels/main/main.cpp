@@ -1,14 +1,14 @@
 #include "mcugdx.h"
 #include <stdio.h>
 
-#define TAG "Ultrasonic example"
+#define TAG "Neopixels example"
 
 extern "C" void app_main() {
 	mcugdx_neopixels_config_t config = {
 			.num_leds = 31,
 			.pin = 1};
 	if (!mcugdx_neopixels_init(&config)) return;
-	constexpr uint8_t brightness = 32;
+	constexpr uint8_t brightness = 255;
 	while (true) {
 		for (int i = 0; i < config.num_leds; i++) {
 			int r = 0, g = 0, b = 0;
@@ -27,7 +27,8 @@ extern "C" void app_main() {
 
 			mcugdx_neopixels_set(i, r, g, b);
 		}
-		mcugdx_neopixels_show();
+		mcugdx_log(TAG, "mA: %li", mcugdx_neopixels_power_usage_milli_ampere());
+		mcugdx_neopixels_show_max_milli_ampere(60);
 		mcugdx_sleep(2000);
 	}
 }
