@@ -6,7 +6,7 @@
 extern "C" void app_main() {
 	mcugdx_neopixels_config_t config = {
 			.num_leds = 31,
-			.pin = 1};
+			.pin = 5};
 	if (!mcugdx_neopixels_init(&config)) return;
 	constexpr uint8_t brightness = 255;
 	while (true) {

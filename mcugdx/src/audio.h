@@ -54,6 +54,8 @@ void mcugdx_sound_set_volume(mcugdx_sound_id_t sound_instance, uint8_t volume);
 
 void mcugdx_sound_stop(mcugdx_sound_id_t sound_instance);
 
+mcugdx_result_t mcugdx_sound_is_playing(mcugdx_sound_id_t sound_instance);
+
 #ifdef __cplusplus
 }
 #endif

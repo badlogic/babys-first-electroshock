@@ -72,6 +72,20 @@ void mcugdx_neopixels_set(uint32_t index, uint8_t r, uint8_t g, uint8_t b) {
 	pixel->b = b;
 }
 
+void mcugdx_neopixels_get(uint32_t index, uint8_t *r, uint8_t *g, uint8_t *b) {
+	if (index > config.num_leds - 1) {
+		*r = 0;
+		*g = 0;
+		*b = 0;
+		return;
+	}
+
+	mcugdx_neopixel_t *pixel = &pixels[index];
+	*r = pixel->r;
+	*g = pixel->g;
+	*b = pixel->b;
+}
+
 static void color_to_spi(uint8_t color, uint8_t *out) {
 	for (int i = 0; i < 4; i++) {
 		uint8_t bits = (color >> (6 - 2 * i)) & 0x03;

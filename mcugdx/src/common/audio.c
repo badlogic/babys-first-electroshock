@@ -133,6 +133,14 @@ void mcugdx_sound_stop(mcugdx_sound_id_t sound_instance) {
 	mcugdx_mutex_unlock(&audio_lock);
 }
 
+mcugdx_result_t mcugdx_sound_is_playing(mcugdx_sound_id_t sound_instance) {
+	if (sound_instance > MAX_SOUND_INSTANCES) return MCUGDX_ERROR;
+	mcugdx_mutex_lock(&audio_lock);
+	mcugdx_result_t is_playing = sound_instances[sound_instance].sound != NULL;
+	mcugdx_mutex_unlock(&audio_lock);
+	return is_playing;
+}
+
 #define FIXED_POINT_BITS 8
 #define FIXED_POINT_SCALE (1 << FIXED_POINT_BITS)
 
