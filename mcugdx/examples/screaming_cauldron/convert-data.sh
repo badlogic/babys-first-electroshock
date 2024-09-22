@@ -2,7 +2,7 @@
 
 mkdir -p data
 
-for file in data-raw/*.mp3; do
-  filename=$(basename "$file" .mp3)
+for file in data-raw/*.wav; do
+  filename=$(basename "$file" .wav)
   ./qoaconv "$file" "data/${filename}.qoa"
 done

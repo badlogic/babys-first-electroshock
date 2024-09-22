@@ -6,6 +6,7 @@
 
 #define NUM_LEDS 31
 mcugdx_sound_id_t curr_sound = -1;
+uint32_t sound_index = 0;
 
 #define ULTRASONIC_INTERVAL 0.05
 double last_ultrasonic_time;
@@ -98,18 +99,29 @@ extern "C" void app_main() {
 	mcugdx_rofs_init();
 
 	mcugdx_audio_config_t audio_config = {
-			.sample_rate = 44100,
+			.sample_rate = 22050,
 			.channels = MCUGDX_MONO,
 			.bclk = 12,
 			.ws = 13,
 			.dout = 11};
 	mcugdx_audio_init(&audio_config);
-	mcugdx_audio_set_master_volume(140);
+	mcugdx_audio_set_master_volume(180);
 
 	mcugdx_sound_t *sounds[] = {
+                    mcugdx_sound_load("scream11.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream12.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream13.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
 			mcugdx_sound_load("scream1.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream2.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream3.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL)};
+			//mcugdx_sound_load("scream2.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream3.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream4.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream5.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream6.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream7.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream8.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream9.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream10.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+};
 	size_t num_sounds = sizeof(sounds) / sizeof(sounds[0]);
 
 	mcugdx_ultrasonic_config_t ultrasonic_config = {
@@ -129,8 +141,8 @@ extern "C" void app_main() {
         if (mcugdx_time() - last_ultrasonic_time > ULTRASONIC_INTERVAL && mcugdx_ultrasonic_measure(20, &distance)) {
             if (curr_sound == -1 && distance < 10) {
                 mcugdx_log(TAG, "Hand detected, playing sound");
-                size_t random_index = rand() % num_sounds;
-                curr_sound = mcugdx_sound_play(sounds[random_index], 255, MCUGDX_SINGLE_SHOT);
+                curr_sound = mcugdx_sound_play(sounds[sound_index++], 255, MCUGDX_SINGLE_SHOT);
+                if (sound_index >= num_sounds) sound_index = 0;
             }
             last_ultrasonic_time = mcugdx_time();
         }
