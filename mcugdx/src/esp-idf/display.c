@@ -54,7 +54,7 @@
 
 #define TAG "mcugdx_display"
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 32768
 
 #define MADCTL_MY 0x80 ///< Bottom to top
 #define MADCTL_MX 0x40 ///< Right to left
