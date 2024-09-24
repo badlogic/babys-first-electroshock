@@ -67,7 +67,7 @@ wad_file_class_t rofs_wad_file = {
 };
 
 void DG_Init() {
-	DG_ScreenBuffer = (pixel_t *)mcugdx_display_frame_buffer();
+	DG_ScreenBuffer = (pixel_t *) mcugdx_display_frame_buffer();
 }
 
 void DG_SetWindowTitle(const char *title) {
@@ -76,7 +76,7 @@ void DG_SetWindowTitle(const char *title) {
 int frames = 0;
 double last_frame_time = -1;
 void DG_DrawFrame(void) {
-    mcugdx_display_show();
+	mcugdx_display_show();
 
 	frames++;
 	if (frames > 60 * 5) {
@@ -90,7 +90,7 @@ void DG_DrawFrame(void) {
 }
 
 uint32_t DG_GetTicksMs() {
-	uint32_t ticks = (uint32_t)(mcugdx_time() * 1000);
+	uint32_t ticks = (uint32_t) (mcugdx_time() * 1000);
 	return ticks;
 }
 
