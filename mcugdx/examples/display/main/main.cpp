@@ -14,7 +14,7 @@
 #if 1
 mcugdx_display_config_t display_config = {
 		.driver = MCUGDX_ST7789,
-		.native_width = 240,
+		.native_width = 200,
 		.native_height = 320,
 		.mosi = 3,
 		.sck = 4,
@@ -74,7 +74,7 @@ extern "C" void app_main() {
 	mcugdx_mem_print();
 
 	double load_start = mcugdx_time();
-	mcugdx_image_t *bear = mcugdx_image_load("bear.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
+	mcugdx_image_t *bear = mcugdx_image_load("bear.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
 	mcugdx_log(TAG, "Load took: %f", (mcugdx_time() - load_start));
 	mcugdx_mem_print();
 
@@ -95,9 +95,9 @@ extern "C" void app_main() {
 			if (!box->image) {
 				mcugdx_display_rect(box->x, box->y, box->width, box->height, box->color);
 			} else {
-				// for (int j = 0; j < 100; j++)
-				// mcugdx_display_blit(box->image, box->x, box->y);
-				mcugdx_display_blit_keyed(box->image, box->x, box->y, 0x0);
+				for (int j = 0; j < 1; j++)
+				// mcugdx_display_blit(box->image, 0, 0);
+					mcugdx_display_blit_keyed(box->image, box->x, box->y, 0x0);
 			}
 		}
 

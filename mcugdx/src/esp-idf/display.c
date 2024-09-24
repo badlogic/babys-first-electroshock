@@ -309,7 +309,12 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	display.native_height = display.height = display_cfg->native_height;
 	display.orientation = MCUGDX_PORTRAIT;
 	dc = display_cfg->dc;
-	display.frame_buffer = heap_caps_calloc(display.width * display.height * sizeof(uint16_t), 1, MALLOC_CAP_DMA);
+	mcugdx_mem_print();
+	mcugdx_log(TAG, "Largest DMA block %li", heap_caps_get_largest_free_block(MALLOC_CAP_DMA));
+	size_t num_bytes = display.width * display.height * sizeof(uint16_t);
+	mcugdx_log(TAG, "Trying to allocate %li frame buffer bytes", num_bytes);
+	display.frame_buffer = heap_caps_calloc(num_bytes, 1, MALLOC_CAP_DMA);
+	mcugdx_log(TAG, "Frame buffer at %p\n", display.frame_buffer);
 	internal_mem += display.width * display.height * sizeof(uint16_t);
 
 	// Send init commands to display

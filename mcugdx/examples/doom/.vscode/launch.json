@@ -1,0 +1,52 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "gdbtarget",
+      "request": "attach",
+      "name": "Debug device target",
+      "program": "${workspaceFolder}/build/${command:espIdf.getProjectName}.elf",
+      "initCommands": [
+        "set remote hardware-watchpoint-limit {IDF_TARGET_CPU_WATCHPOINT_NUM}",
+        "mon reset halt",
+        "maintenance flush register-cache"
+      ],
+      "gdb": "${command:espIdf.getToolchainGdb}",
+      "target": {
+        "connectCommands": [
+          "set remotetimeout 20",
+          "-target-select extended-remote localhost:3333"
+        ]
+      }
+    },
+    {
+      "name": "Desktop debug target",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${command:cmake.getLaunchTargetPath}",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${command:cmake.getLaunchTargetDirectory}",
+      "environment": [],
+      "preLaunchTask": "CMake: build",
+      "MIMode": "lldb",
+      "windows": {
+        "name": "Desktop debug target",
+        "type": "cppvsdbg",
+        "request": "launch",
+        "program": "${command:cmake.getLaunchTargetPath}",
+        "console": "integratedTerminal"
+      },
+      "linux": {
+        "name": "Desktop debug target",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${command:cmake.getLaunchTargetPath}",
+        "MIMode": "gdb"
+      }
+    }
+  ]
+}

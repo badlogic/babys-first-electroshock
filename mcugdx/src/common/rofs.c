@@ -4,6 +4,7 @@
 #include <string.h>
 #include "log.h"
 #include "mem.h"
+#include "result.h"
 
 #define TAG "mcugdx_rofs"
 
@@ -129,7 +130,7 @@ uint8_t *read_partition_file(void) {
 	long file_size = ftell(file);
 	fseek(file, 0, SEEK_SET);
 
-	uint8_t *partition = mcugdx_mem_alloc(file_size, MCUGDX_MEM_INTERNAL);
+	uint8_t *partition = malloc(file_size);
 	if (!partition) {
 		mcugdx_loge(TAG, "Failed to allocate memory.\n");
 		fclose(file);
@@ -224,4 +225,58 @@ int rofs_init(void) {
 	}
 
 	return 1;
+}
+
+mcugdx_result_t rofs_exists(const char *path) {
+	for (uint32_t i = 0; i < fs.num_files; i++) {
+		if (strcmp(fs.files[i].name, path) == 0) {
+			return MCUGDX_OK;
+		}
+	}
+	return MCUGDX_ERROR;
+}
+
+rofs_file_handle_t rofs_open(const char *path) {
+	for (uint32_t i = 0; i < fs.num_files; i++) {
+		if (strcmp(fs.files[i].name, path) == 0) {
+			return i + 1;
+		}
+	}
+	return 0;
+}
+
+uint32_t rofs_length(rofs_file_handle_t handle) {
+	return fs.files[handle - 1].size;
+}
+
+uint32_t rofs_read(rofs_file_handle_t handle, uint32_t file_offset, char *buffer, uint32_t buffer_len) {
+    uint32_t i = handle - 1;
+    uint32_t file_size = fs.files[i].size;
+    uint32_t file_start_offset = fs.files[i].offset;
+
+    if (file_offset >= file_size) {
+		mcugdx_loge(TAG, "Offset %u pass end of file %s", file_offset, fs.files[i].name);
+        return 0;
+    }
+
+    uint32_t bytes_to_read = file_size - file_offset;
+    if (bytes_to_read > buffer_len) {
+        bytes_to_read = buffer_len;
+    }
+
+#ifdef ESP_PLATFORM
+    esp_err_t result = esp_partition_read(partition,
+                                          file_start_offset + file_offset,
+                                          buffer,
+                                          bytes_to_read);
+    if (result != ESP_OK) {
+        mcugdx_loge(TAG, "Failed to read file %s at offset %u\n", fs.files[i].name, file_offset);
+        return 0;
+    }
+#else
+    const uint8_t *data = partition + file_start_offset + file_offset;
+    memcpy(buffer, data, bytes_to_read);
+#endif
+
+    return bytes_to_read;
 }
