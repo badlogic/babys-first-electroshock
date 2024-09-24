@@ -5,24 +5,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "gdbtarget",
-      "request": "attach",
-      "name": "Debug device target",
-      "program": "${workspaceFolder}/build/${command:espIdf.getProjectName}.elf",
-      "initCommands": [
-        "set remote hardware-watchpoint-limit {IDF_TARGET_CPU_WATCHPOINT_NUM}",
-        "mon reset halt",
-        "maintenance flush register-cache"
-      ],
-      "gdb": "${command:espIdf.getToolchainGdb}",
-      "target": {
-        "connectCommands": [
-          "set remotetimeout 20",
-          "-target-select extended-remote localhost:3333"
-        ]
-      }
-    },
-    {
       "name": "Desktop debug target",
       "type": "cppdbg",
       "request": "launch",

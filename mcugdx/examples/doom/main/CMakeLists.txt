@@ -11,6 +11,6 @@ set(SRC_DOOM
     doomgeneric/s_sound.c doomgeneric/tables.c doomgeneric/v_video.c doomgeneric/wi_stuff.c doomgeneric/w_checksum.c doomgeneric/w_file.c doomgeneric/w_main.c
     doomgeneric/w_wad.c doomgeneric/z_zone.c doomgeneric/w_file_stdc.c doomgeneric/i_input.c doomgeneric/i_video.c doomgeneric/doomgeneric.c doomgeneric/mus2mid.c
 )
-idf_component_register(SRCS "${SRC_DOOM}" main.c
+idf_component_register(SRCS "main.c" "${SRC_DOOM}" main.c
                        INCLUDE_DIRS ".")
 mcugdx_create_rofs_partition(rofs "${CMAKE_CURRENT_SOURCE_DIR}/../data/")

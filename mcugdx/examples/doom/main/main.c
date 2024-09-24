@@ -9,7 +9,7 @@
 #if 1
 mcugdx_display_config_t display_config = {
 		.driver = MCUGDX_ST7789,
-		.native_width = 200,
+		.native_width = 240,
 		.native_height = 320,
 		.mosi = 3,
 		.sck = 4,
@@ -67,7 +67,7 @@ wad_file_class_t rofs_wad_file = {
 };
 
 void DG_Init() {
-	DG_ScreenBuffer = (pixel_t *) mcugdx_display_frame_buffer();
+	DG_ScreenBuffer = (pixel_t *) (mcugdx_display_frame_buffer() + mcugdx_display_width() * 20);
 }
 
 void DG_SetWindowTitle(const char *title) {

@@ -383,6 +383,9 @@ void R_DrawPlanes (void)
     int                 lumpnum;
 
 #ifdef RANGECHECK
+    if (drawsegs == NULL) {
+        drawsegs = mcugdx_mem_alloc(sizeof(drawseg_t) * MAXDRAWSEGS, MCUGDX_MEM_EXTERNAL);
+    }
     if (ds_p - drawsegs > MAXDRAWSEGS)
 	I_Error ("R_DrawPlanes: drawsegs overflow (%i)",
 		 ds_p - drawsegs);
