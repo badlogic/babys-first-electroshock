@@ -234,11 +234,11 @@ void app_main() {
 	mcugdx_display_set_orientation(MCUGDX_LANDSCAPE);
 	mcugdx_rofs_init();
 	mcugdx_audio_init(&(mcugdx_audio_config_t){
-			.bclk = -1,
 			.channels = 2,
-			.dout = -1,
 			.sample_rate = 11025,
-			.ws = -1});
+			.bclk = 47,
+			.ws = 21,
+			.dout = 38});
 
 	char *args[] = {"doomgeneric", "-iwad", "Doom1.WAD", "-mmap"};
 	doomgeneric_Create(4, args);

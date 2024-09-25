@@ -24,7 +24,7 @@ typedef struct {
 } mcugdx_sound_instance_t;
 
 static mcugdx_sound_instance_t sound_instances[MAX_SOUND_INSTANCES] = {0};
-uint8_t master_volume = 255;
+uint8_t master_volume = 128;
 
 extern mcugdx_mutex_t audio_lock;
 
