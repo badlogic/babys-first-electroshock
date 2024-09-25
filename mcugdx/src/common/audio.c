@@ -148,7 +148,6 @@ mcugdx_result_t mcugdx_sound_is_playing(mcugdx_sound_id_t sound_instance) {
 #define FIXED_POINT_SCALE (1 << FIXED_POINT_BITS)
 #define FIXED_POINT_MASK (FIXED_POINT_SCALE - 1)
 
-// Fixed-point square root approximation
 int32_t fixed_sqrt(int32_t x) {
     int32_t root = 0;
     int32_t bit = 1 << 30;
@@ -168,6 +167,11 @@ int32_t fixed_sqrt(int32_t x) {
     return root;
 }
 
+void calculate_pan_gains(uint8_t pan, int32_t *left_gain, int32_t *right_gain) {
+    *left_gain = (255 - pan) * 256;
+    *right_gain = pan * 256;
+}
+
 void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channels_t channels) {
     memset(frames, 0, num_frames * channels * sizeof(int32_t));
 
@@ -185,11 +189,8 @@ void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channel
         return;
     }
 
-    // Calculate the gain factor for each source
     int32_t gain_per_source = fixed_sqrt(FIXED_POINT_SCALE / active_sources);
-
-    // Boost the overall volume
-    int32_t volume_boost = FIXED_POINT_SCALE + (FIXED_POINT_SCALE / 2); // 1.5x boost
+    int32_t volume_boost = FIXED_POINT_SCALE + (FIXED_POINT_SCALE / 4);
 
     for (int i = 0; i < MAX_SOUND_INSTANCES; i++) {
         mcugdx_sound_instance_t *instance = &sound_instances[i];
@@ -201,11 +202,9 @@ void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channel
         uint32_t frames_to_mix = num_frames;
         uint32_t source_position = instance->position;
         int32_t instance_volume = scale_volume(instance->volume);
-        int32_t final_gain = ((int64_t)gain_per_source * instance_volume * volume_boost) >> (8 + FIXED_POINT_BITS);
-
-        // Calculate panning factors
-        int32_t pan_left = 255 - instance->pan;
-        int32_t pan_right = instance->pan;
+        int32_t final_gain = (gain_per_source * instance_volume * volume_boost) >> (8 + FIXED_POINT_BITS);
+        int32_t pan_left_gain, pan_right_gain;
+        calculate_pan_gains(instance->pan, &pan_left_gain, &pan_right_gain);
 
         while (frames_to_mix > 0) {
             uint32_t frames_left_in_sound = instance->sound->num_frames - source_position;
@@ -215,18 +214,15 @@ void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channel
                 int32_t left_sample, right_sample;
 
                 if (instance->sound->channels == 1) {
-                    // Apply panning for mono sources
                     int32_t mono_sample = instance->sound->frames[source_position];
-                    left_sample = (mono_sample * pan_left) >> 8;
-                    right_sample = (mono_sample * pan_right) >> 8;
+                    left_sample = right_sample = mono_sample;
                 } else {
-                    // Stereo sources use original panning
                     left_sample = instance->sound->frames[source_position * 2];
                     right_sample = instance->sound->frames[source_position * 2 + 1];
                 }
 
-                left_sample = (left_sample * final_gain) >> 8;
-                right_sample = (right_sample * final_gain) >> 8;
+                left_sample = ((left_sample * pan_left_gain) >> 8) * final_gain >> 16;
+                right_sample = ((right_sample * pan_right_gain) >> 8) * final_gain >> 16;
 
                 if (channels == MCUGDX_MONO) {
                     frames[frame] += (left_sample + right_sample) >> 1;
@@ -262,7 +258,6 @@ void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channel
         int32_t sample = frames[i];
         sample = (sample * master_volume) >> 8;
 
-        // Soft clipping
         if (sample > INT16_MAX) {
             sample = INT16_MAX;
         } else if (sample < INT16_MIN) {
