@@ -1,4 +1,4 @@
-#include <stdio.h>
+
 #include "mcugdx.h"
 #include "doomgeneric/doomgeneric.h"
 #include "doomgeneric/w_file.h"
@@ -7,6 +7,7 @@
 #include "doomgeneric/w_wad.h"
 #include "doomgeneric/z_zone.h"
 #include "doomgeneric/deh_str.h"
+#include "doomgeneric/doomtype.h"
 
 #define TAG "DOOM"
 
