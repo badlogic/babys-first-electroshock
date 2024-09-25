@@ -33,6 +33,11 @@ static void log(
 }
 
 static void mix_and_stream(float *buffer, int num_frames, int num_channels) {
+	if(frames == NULL) {
+		int buffer_frames = saudio_buffer_frames();
+		frames = (int32_t *) mcugdx_mem_alloc(sizeof(int32_t) * buffer_frames * channels, MCUGDX_MEM_EXTERNAL);
+	}
+
 	mcugdx_audio_mix(frames, num_frames, num_channels);
 	int16_t *frames_i16 = (int16_t *) frames;
 	for (int i = 0; i < num_frames * num_channels; i++) {
@@ -60,8 +65,6 @@ mcugdx_result_t mcugdx_audio_init(mcugdx_audio_config_t *config) {
 		mcugdx_loge(TAG, "Could not initiated audio device with sample rate %i and %i channels. Got %i sample rate and %i channels", config->sample_rate, config->channels, saudio_sample_rate(), saudio_channels());
 		return MCUGDX_ERROR;
 	}
-
-	frames = (int32_t *) mcugdx_mem_alloc(sizeof(int32_t) * saudio_buffer_frames() * channels, MCUGDX_MEM_EXTERNAL);
 
 	mcugdx_log(TAG, "Initialized audio device, sample rate: %i, channels: %i, buffer size: %i frames", sample_rate, channels, saudio_buffer_frames());
 

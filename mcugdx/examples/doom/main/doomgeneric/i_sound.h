@@ -32,7 +32,7 @@ struct sfxinfo_struct
 {
     // tag name, used for hexen.
     char *tagname;
-    
+
     // lump name.  If we are running with use_sfx_prefix=true, a
     // 'DS' (or 'DP' for PC speaker sounds) is prepended to this.
 
@@ -56,9 +56,9 @@ struct sfxinfo_struct
     int usefulness;
 
     // lump number of sfx
-    int lumpnum;		
+    int lumpnum;
 
-    // Maximum number of channels that the sound can be played on 
+    // Maximum number of channels that the sound can be played on
     // (Heretic)
     int numchannels;
 
@@ -76,16 +76,16 @@ typedef struct
 
     // lump number of music
     int lumpnum;
-    
+
     // music data
     void *data;
 
     // music handle once registered
     void *handle;
-    
+
 } musicinfo_t;
 
-typedef enum 
+typedef enum
 {
     SNDDEVICE_NONE = 0,
     SNDDEVICE_PCSPEAKER = 1,
@@ -237,8 +237,8 @@ void I_BindSoundVariables(void);
 // Sound modules
 
 void I_InitTimidityConfig(void);
-#ifdef FEATURE_SOUND
 extern sound_module_t DG_sound_module;
+#ifdef FEATURE_SOUND
 extern music_module_t DG_music_module;
 #endif
 extern sound_module_t sound_pcsound_module;

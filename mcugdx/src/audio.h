@@ -48,9 +48,11 @@ mcugdx_sound_t *mcugdx_sound_load(const char *path, mcugdx_read_file_func_t read
 
 void mcugdx_sound_unload(mcugdx_sound_t *sound);
 
-mcugdx_sound_id_t mcugdx_sound_play(mcugdx_sound_t *sound, uint8_t volume, mcugdx_playback_mode mode);
+mcugdx_sound_id_t mcugdx_sound_play(mcugdx_sound_t *sound, uint8_t volume, uint8_t pan, mcugdx_playback_mode mode);
 
 void mcugdx_sound_set_volume(mcugdx_sound_id_t sound_instance, uint8_t volume);
+
+void mcugdx_sound_set_volume(mcugdx_sound_id_t sound_instance, uint8_t pan);
 
 void mcugdx_sound_stop(mcugdx_sound_id_t sound_instance);
 
