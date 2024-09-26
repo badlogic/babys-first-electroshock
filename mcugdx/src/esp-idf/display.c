@@ -188,7 +188,7 @@ void init_ili9143(spi_device_handle_t device, int dc) {
 	spi_write_command(device, dc, 0x3A);  //Pixel Format Set
 	spi_write_data_byte(device, dc, 0x55);//65K color: 16-bit/pixel
 
-	spi_write_command(device, dc, 0x20);//Display Inversion OFF
+	spi_write_command(device, dc, 0x21);//Display Inversion OFF
 
 	spi_write_command(device, dc, 0xB1);//Frame Rate Control
 	spi_write_data_byte(device, dc, 0x00);

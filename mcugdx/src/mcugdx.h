@@ -13,6 +13,7 @@ extern "C" {
 #include "display.h"
 #include "ultrasonic.h"
 #include "neopixels.h"
+#include "buttons.h"
 
 void mcugdx_init(void);
 

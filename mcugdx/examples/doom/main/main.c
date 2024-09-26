@@ -32,7 +32,7 @@ mcugdx_display_config_t display_config = {
 		.sck = 4,
 		.dc = 2,
 		.cs = 1,
-		.reset = 11};
+		.reset = 5};
 #endif
 
 typedef struct {

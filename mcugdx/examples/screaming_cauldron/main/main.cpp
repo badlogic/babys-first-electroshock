@@ -105,8 +105,7 @@ extern "C" void app_main() {
 			.ws = 13,
 			.dout = 11};
 	mcugdx_audio_init(&audio_config);
-	mcugdx_audio_set_master_volume(180);
-
+	mcugdx_audio_set_master_volume(255);
 	mcugdx_sound_t *sounds[] = {
                     mcugdx_sound_load("scream11.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
             mcugdx_sound_load("scream12.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
@@ -125,23 +124,27 @@ extern "C" void app_main() {
 	size_t num_sounds = sizeof(sounds) / sizeof(sounds[0]);
 
 	mcugdx_ultrasonic_config_t ultrasonic_config = {
-			.trigger = 2,
-			.echo = 3};
+            // PERF BOARD
+			//.trigger = 2,
+			//.echo = 3};
+            .trigger = 1,
+			.echo = 2};
 	mcugdx_ultrasonic_init(&ultrasonic_config);
 	last_ultrasonic_time = mcugdx_time();
 
 	mcugdx_neopixels_config_t neopixels_config = {
 			.num_leds = NUM_LEDS,
-			.pin = 5};
+            // PERF BOARD
+			// .pin = 5};
+            .pin = 3};
 	if (!mcugdx_neopixels_init(&neopixels_config)) return;
-
 
     while (true) {
         uint32_t distance = 0;
         if (mcugdx_time() - last_ultrasonic_time > ULTRASONIC_INTERVAL && mcugdx_ultrasonic_measure(20, &distance)) {
             if (curr_sound == -1 && distance < 10) {
                 mcugdx_log(TAG, "Hand detected, playing sound");
-                curr_sound = mcugdx_sound_play(sounds[sound_index++], 255, MCUGDX_SINGLE_SHOT);
+                curr_sound = mcugdx_sound_play(sounds[sound_index++], 128, 0, MCUGDX_SINGLE_SHOT);
                 if (sound_index >= num_sounds) sound_index = 0;
             }
             last_ultrasonic_time = mcugdx_time();
