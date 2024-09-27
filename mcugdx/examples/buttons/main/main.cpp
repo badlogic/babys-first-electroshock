@@ -1,48 +1,54 @@
-/*#include "mcugdx.h"
-#include <stdio.h>
+#include "mcugdx.h"
 
-#define TAG "Buttons example"
+#define TAG "Button example"
 
-extern "C" void app_main() {
-	mcugdx_log(TAG, "Stuff");
-}
-*/
+#define DEBOUNCE_TIME 25
 
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
-#include "esp_log.h"
+// Big & Little blue fucker
+#if 1
+mcugdx_display_config_t display_config = {
+		.driver = MCUGDX_ST7789,
+		.native_width = 200,
+		.native_height = 320,
+		.mosi = 3,
+		.sck = 4,
+		.dc = 2,
+		.cs = 1,
+		.reset = 5};
+#else
+// ILI9341 2,8" 240x320
+mcugdx_display_config_t display_config = {
+		.driver = MCUGDX_ILI9341,
+		.native_width = 240,
+		.native_height = 320,
+		.mosi = 3,
+		.sck = 4,
+		.dc = 2,
+		.cs = 1,
+		.reset = 11
+};
+#endif
 
-#define BUTTON_PIN 1
-#define DEBOUNCE_TIME 50 // milliseconds
+extern "C" void app_main(void) {
+    mcugdx_display_init(&display_config);
+    mcugdx_display_set_orientation(MCUGDX_LANDSCAPE);
 
-static const char *TAG = "BUTTON_EXAMPLE";
+    mcugdx_button_create(2, DEBOUNCE_TIME, MCUGDX_KEY_K);
+    mcugdx_button_create(3, DEBOUNCE_TIME, MCUGDX_KEY_L);
+    mcugdx_button_create(4, DEBOUNCE_TIME, MCUGDX_KEY_ESCAPE);
+    mcugdx_button_create(5, DEBOUNCE_TIME, MCUGDX_KEY_ENTER);
+    mcugdx_button_create(21, DEBOUNCE_TIME, MCUGDX_KEY_D);
+    mcugdx_button_create(16, DEBOUNCE_TIME, MCUGDX_KEY_S);
+    mcugdx_button_create(15, DEBOUNCE_TIME, MCUGDX_KEY_A);
+    mcugdx_button_create(14, DEBOUNCE_TIME, MCUGDX_KEY_W);
 
-extern "C" void app_main(void)
-{
-    // Configure button GPIO
-    gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << BUTTON_PIN),
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_ENABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE
-    };
-    gpio_config(&io_conf);
-
-    ESP_LOGI(TAG, "Button configured on pin %d with internal pull-up", BUTTON_PIN);
-
-    int last_state = 1; // Assuming button not pressed initially (pull-up active)
-    while (1) {
-        int current_state = gpio_get_level((gpio_num_t)BUTTON_PIN);
-
-        if (current_state == 0 && last_state == 1) {
-            ESP_LOGI(TAG, "Button pressed!");
-            vTaskDelay(pdMS_TO_TICKS(DEBOUNCE_TIME)); // Simple debounce
+    while(true) {
+        mcugdx_button_event_t event;
+        if (mcugdx_button_get_event(&event)) {
+            mcugdx_log(TAG, "Button %s %s", mcugdx_keycode_to_string(event.keycode), event.type == MCUGDX_BUTTON_PRESSED ? "pressed" : "released");
         }
 
-        last_state = current_state;
-        vTaskDelay(pdMS_TO_TICKS(10)); // Poll every 10ms
+        mcugdx_display_show();
+        mcugdx_sleep(0);
     }
 }

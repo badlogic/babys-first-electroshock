@@ -10,10 +10,12 @@
 #define TAG "mcugdx_display"
 
 static uint32_t *frame_buffer_32;
-static struct mfb_window *window;
+struct mfb_window *window;
 mcugdx_display_t display;
 
 extern size_t internal_mem;
+
+extern void mcugdx_desktop_update_button(struct mfb_window *window, mfb_key key, mfb_key_mod mod, bool is_pressed);
 
 mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	display.native_width = display.width = display_cfg->native_width;
@@ -41,6 +43,7 @@ void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
 	}
 	window = mfb_open_ex("mcugdx", display.width * 2, display.height * 2, 0);
 	if (!window) mcugdx_loge(TAG, "Could not create window\n");
+	mfb_set_keyboard_callback(window, mcugdx_desktop_update_button);
 }
 
 void mcugdx_display_show(void) {
