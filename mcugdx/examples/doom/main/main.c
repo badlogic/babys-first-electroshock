@@ -8,8 +8,10 @@
 #include "doomgeneric/z_zone.h"
 #include "doomgeneric/deh_str.h"
 #include "doomgeneric/doomtype.h"
+#include "doomgeneric/doomkeys.h"
 
 #define TAG "DOOM"
+#define DEBOUNCE_TIME 25
 
 // Big & Little blue fucker
 #if 1
@@ -105,7 +107,7 @@ void doom_update_sound_params(int handle, int vol, int sep) {
 
 int doom_start_sound(sfxinfo_t *sfxinfo, int channel, int vol, int sep) {
 	if (sfxinfo->driver_data) {
-		return mcugdx_sound_play((mcugdx_sound_t*)sfxinfo->driver_data, vol, sep, MCUGDX_SINGLE_SHOT);
+		return mcugdx_sound_play((mcugdx_sound_t *) sfxinfo->driver_data, vol, sep, MCUGDX_SINGLE_SHOT);
 	} else {
 		return -1;
 	}
@@ -226,7 +228,41 @@ void DG_SleepMs(uint32_t ms) {
 }
 
 int DG_GetKey(int *pressed, unsigned char *doomKey) {
-	return 0;
+	mcugdx_button_event_t event;
+	if (mcugdx_button_get_event(&event)) {
+		*pressed = event.type == MCUGDX_BUTTON_PRESSED ? -1 : 0;
+		switch(event.keycode) {
+			case MCUGDX_KEY_ESCAPE:
+				*doomKey = KEY_ESCAPE;
+				break;
+			case MCUGDX_KEY_ENTER:
+				*doomKey = KEY_ENTER;
+				break;
+			case MCUGDX_KEY_A:
+				*doomKey = KEY_LEFTARROW;
+				break;
+			case MCUGDX_KEY_S:
+				*doomKey = KEY_DOWNARROW;
+				break;
+			case MCUGDX_KEY_D:
+				*doomKey = KEY_RIGHTARROW;
+				break;
+			case MCUGDX_KEY_W:
+				*doomKey = KEY_UPARROW;
+				break;
+			case MCUGDX_KEY_K:
+				*doomKey = KEY_FIRE;
+				break;
+			case MCUGDX_KEY_L:
+				*doomKey = KEY_USE;
+				break;
+			default:
+				return 0;
+		}
+		return -1;
+	} else {
+		return 0;
+	}
 }
 void app_main() {
 	mcugdx_init();
@@ -239,6 +275,14 @@ void app_main() {
 			.bclk = 47,
 			.ws = 21,
 			.dout = 38});
+    mcugdx_button_create(10, DEBOUNCE_TIME, MCUGDX_KEY_K);
+    mcugdx_button_create(9, DEBOUNCE_TIME, MCUGDX_KEY_L);
+    mcugdx_button_create(8, DEBOUNCE_TIME, MCUGDX_KEY_ESCAPE);
+    mcugdx_button_create(7, DEBOUNCE_TIME, MCUGDX_KEY_ENTER);
+    mcugdx_button_create(6, DEBOUNCE_TIME, MCUGDX_KEY_D);
+    mcugdx_button_create(12, DEBOUNCE_TIME, MCUGDX_KEY_S);
+    mcugdx_button_create(13, DEBOUNCE_TIME, MCUGDX_KEY_A);
+    mcugdx_button_create(14, DEBOUNCE_TIME, MCUGDX_KEY_W);
 
 	char *args[] = {"doomgeneric", "-iwad", "Doom1.WAD", "-mmap"};
 	doomgeneric_Create(4, args);

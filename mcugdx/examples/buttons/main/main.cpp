@@ -10,11 +10,11 @@ mcugdx_display_config_t display_config = {
 		.driver = MCUGDX_ST7789,
 		.native_width = 200,
 		.native_height = 320,
-		.mosi = 3,
-		.sck = 4,
-		.dc = 2,
-		.cs = 1,
-		.reset = 5};
+		.mosi = 6,
+		.sck = 7,
+		.dc = 8,
+		.cs = 9,
+		.reset = 34};
 #else
 // ILI9341 2,8" 240x320
 mcugdx_display_config_t display_config = {
