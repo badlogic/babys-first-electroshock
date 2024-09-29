@@ -566,11 +566,14 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels, mcugd
 
 			index[QOI_COLOR_HASH(px) % 64] = px;
 		}
-
-		uint8_t r = px.rgba.r >> 3;
-		uint8_t g = px.rgba.g >> 2;
-		uint8_t b = px.rgba.b >> 3;
-		pixels[px_pos] = __builtin_bswap16((r << 11) | (g << 5) | b);
+		if (px.rgba.a == 0) {
+			pixels[px_pos] = 0;
+		} else {
+			uint8_t r = px.rgba.r >> 3;
+			uint8_t g = px.rgba.g >> 2;
+			uint8_t b = px.rgba.b >> 3;
+			pixels[px_pos] = __builtin_bswap16((r << 11) | (g << 5) | b);
+		}
 	}
 
 	return pixels;
