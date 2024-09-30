@@ -242,97 +242,97 @@ void mcugdx_display_blit_region(mcugdx_image_t *src, int32_t dst_x, int32_t dst_
 }
 
 void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_t dst_y, int32_t src_x, int32_t src_y, int32_t src_width, int32_t src_height, uint16_t color_key) {
-    // 1. Clipping
-    int32_t clip_src_x = src_x;
-    int32_t clip_src_y = src_y;
-    int32_t clip_dst_x = dst_x;
-    int32_t clip_dst_y = dst_y;
-    int32_t clip_width = src_width;
-    int32_t clip_height = src_height;
+	// 1. Clipping
+	int32_t clip_src_x = src_x;
+	int32_t clip_src_y = src_y;
+	int32_t clip_dst_x = dst_x;
+	int32_t clip_dst_y = dst_y;
+	int32_t clip_width = src_width;
+	int32_t clip_height = src_height;
 
-    // Clip source left and top
-    if (clip_src_x < 0) {
-        clip_width += clip_src_x;
-        clip_dst_x -= clip_src_x;
-        clip_src_x = 0;
-    }
-    if (clip_src_y < 0) {
-        clip_height += clip_src_y;
-        clip_dst_y -= clip_src_y;
-        clip_src_y = 0;
-    }
+	// Clip source left and top
+	if (clip_src_x < 0) {
+		clip_width += clip_src_x;
+		clip_dst_x -= clip_src_x;
+		clip_src_x = 0;
+	}
+	if (clip_src_y < 0) {
+		clip_height += clip_src_y;
+		clip_dst_y -= clip_src_y;
+		clip_src_y = 0;
+	}
 
-    // Clip source right and bottom
-    if (clip_src_x + clip_width > (int32_t)src->width) {
-        clip_width = src->width - clip_src_x;
-    }
-    if (clip_src_y + clip_height > (int32_t)src->height) {
-        clip_height = src->height - clip_src_y;
-    }
+	// Clip source right and bottom
+	if (clip_src_x + clip_width > (int32_t) src->width) {
+		clip_width = src->width - clip_src_x;
+	}
+	if (clip_src_y + clip_height > (int32_t) src->height) {
+		clip_height = src->height - clip_src_y;
+	}
 
-    // Clip destination left and top
-    if (clip_dst_x < 0) {
-        clip_width += clip_dst_x;
-        clip_src_x -= clip_dst_x;
-        clip_dst_x = 0;
-    }
-    if (clip_dst_y < 0) {
-        clip_height += clip_dst_y;
-        clip_src_y -= clip_dst_y;
-        clip_dst_y = 0;
-    }
+	// Clip destination left and top
+	if (clip_dst_x < 0) {
+		clip_width += clip_dst_x;
+		clip_src_x -= clip_dst_x;
+		clip_dst_x = 0;
+	}
+	if (clip_dst_y < 0) {
+		clip_height += clip_dst_y;
+		clip_src_y -= clip_dst_y;
+		clip_dst_y = 0;
+	}
 
-    // Clip destination right and bottom
-    if (clip_dst_x + clip_width > (int32_t)display.width) {
-        clip_width = display.width - clip_dst_x;
-    }
-    if (clip_dst_y + clip_height > (int32_t)display.height) {
-        clip_height = display.height - clip_dst_y;
-    }
+	// Clip destination right and bottom
+	if (clip_dst_x + clip_width > (int32_t) display.width) {
+		clip_width = display.width - clip_dst_x;
+	}
+	if (clip_dst_y + clip_height > (int32_t) display.height) {
+		clip_height = display.height - clip_dst_y;
+	}
 
-    // Early exit if nothing to draw
-    if (clip_width <= 0 || clip_height <= 0) {
-        return;
-    }
+	// Early exit if nothing to draw
+	if (clip_width <= 0 || clip_height <= 0) {
+		return;
+	}
 
-    // 2. Pixel copying with optimizations
-    uint16_t *src_row = &src->pixels[clip_src_y * src->width + clip_src_x];
-    uint16_t *dst_row = &display.frame_buffer[clip_dst_y * display.width + clip_dst_x];
-    int32_t src_stride = src->width;
-    int32_t dst_stride = display.width;
+	// 2. Pixel copying with optimizations
+	uint16_t *src_row = &src->pixels[clip_src_y * src->width + clip_src_x];
+	uint16_t *dst_row = &display.frame_buffer[clip_dst_y * display.width + clip_dst_x];
+	int32_t src_stride = src->width;
+	int32_t dst_stride = display.width;
 
-    for (int32_t y = 0; y < clip_height; y++) {
-        uint32_t *src_ptr = (uint32_t *)src_row;
-        uint32_t *dst_ptr = (uint32_t *)dst_row;
+	for (int32_t y = 0; y < clip_height; y++) {
+		uint32_t *src_ptr = (uint32_t *) src_row;
+		uint32_t *dst_ptr = (uint32_t *) dst_row;
 
-        for (int32_t x = 0; x < clip_width / 2; x++) {
-            uint32_t src_pixels = *src_ptr++;
-            uint32_t dst_pixels = *dst_ptr;
+		for (int32_t x = 0; x < clip_width / 2; x++) {
+			uint32_t src_pixels = *src_ptr++;
+			uint32_t dst_pixels = *dst_ptr;
 
-            uint16_t src_pixel1 = src_pixels & 0xFFFF;
-            uint16_t src_pixel2 = src_pixels >> 16;
+			uint16_t src_pixel1 = src_pixels & 0xFFFF;
+			uint16_t src_pixel2 = src_pixels >> 16;
 
-            if (src_pixel1 != color_key) {
-                dst_pixels = (dst_pixels & 0xFFFF0000) | src_pixel1;
-            }
-            if (src_pixel2 != color_key) {
-                dst_pixels = (dst_pixels & 0x0000FFFF) | (src_pixel2 << 16);
-            }
+			if (src_pixel1 != color_key) {
+				dst_pixels = (dst_pixels & 0xFFFF0000) | src_pixel1;
+			}
+			if (src_pixel2 != color_key) {
+				dst_pixels = (dst_pixels & 0x0000FFFF) | (src_pixel2 << 16);
+			}
 
-            *dst_ptr++ = dst_pixels;
-        }
+			*dst_ptr++ = dst_pixels;
+		}
 
-        // Handle odd pixel if width is odd
-        if (clip_width & 1) {
-            uint16_t src_pixel = ((uint16_t *)src_ptr)[0];
-            if (src_pixel != color_key) {
-                ((uint16_t *)dst_ptr)[0] = src_pixel;
-            }
-        }
+		// Handle odd pixel if width is odd
+		if (clip_width & 1) {
+			uint16_t src_pixel = ((uint16_t *) src_ptr)[0];
+			if (src_pixel != color_key) {
+				((uint16_t *) dst_ptr)[0] = src_pixel;
+			}
+		}
 
-        src_row += src_stride;
-        dst_row += dst_stride;
-    }
+		src_row += src_stride;
+		dst_row += dst_stride;
+	}
 }
 
 int mcugdx_display_width(void) {

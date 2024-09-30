@@ -8,8 +8,6 @@ else()
 cmake_minimum_required(VERSION 3.16)
 project(mcugdx)
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED TRUE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 include(FetchContent)

@@ -14,13 +14,13 @@
 #if 1
 mcugdx_display_config_t display_config = {
 		.driver = MCUGDX_ST7789,
-		.native_width = 200,
+		.native_width = 240,
 		.native_height = 320,
 		.mosi = 3,
 		.sck = 4,
 		.dc = 2,
 		.cs = 1,
-		.reset = 5};
+		.reset = 17};
 #else
 // ILI9341 2,8" 240x320
 mcugdx_display_config_t display_config = {
@@ -31,7 +31,7 @@ mcugdx_display_config_t display_config = {
 		.sck = 4,
 		.dc = 2,
 		.cs = 1,
-		.reset = 11
+		.reset = 17
 };
 #endif
 

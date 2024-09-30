@@ -145,18 +145,6 @@ void init_st7789(spi_device_handle_t device, int dc) {
 	spi_write_command(device, dc, 0x36);//Memory Data Access Control
 	spi_write_data_byte(device, dc, pixel_order);
 
-	spi_write_command(device, dc, 0x2A);//Column Address Set
-	spi_write_data_byte(device, dc, 0x00);
-	spi_write_data_byte(device, dc, 0x00);
-	spi_write_data_byte(device, dc, 0x00);
-	spi_write_data_byte(device, dc, 0xF0);
-
-	spi_write_command(device, dc, 0x2B);//Row Address Set
-	spi_write_data_byte(device, dc, 0x00);
-	spi_write_data_byte(device, dc, 0x00);
-	spi_write_data_byte(device, dc, 0x00);
-	spi_write_data_byte(device, dc, 0xF0);
-
 	spi_write_command(device, dc, 0x21);//Display Inversion On
 	delay(10);
 

@@ -110,7 +110,7 @@ mcugdx_button_handle_t speed_plus_button;
 mcugdx_button_handle_t speed_minus_button;
 
 #define PARALLAX_HILL_FACTOR 0.1f
-#define PARALLAX_CLOUD_FACTOR 0.05f
+#define PARALLAX_CLOUD_FACTOR 0.01f
 
 float parallax_hill_x = 0;
 float parallax_cloud_x = 0;
@@ -129,10 +129,10 @@ void generate_obstacle(int index) {
 		if (obstacles[NUM_OBSTACLES - 1].type == OBSTACLE_NONE)
 			obstacles[index].x = 320;
 		else {
-			obstacles[index].x = obstacles[NUM_OBSTACLES - 1].x + 200 + randf() * 220;
+			obstacles[index].x = obstacles[NUM_OBSTACLES - 1].x + 200 + randi(0, 220);
 		}
 	} else {
-		obstacles[index].x = obstacles[index - 1].x + 200 + randf() * 220;
+		obstacles[index].x = obstacles[index - 1].x + 200 + randi(0, 220);
 	}
 	obstacles[index].vx = velocity_x;
 
@@ -165,16 +165,15 @@ void generate_obstacle(int index) {
 }
 
 void load() {
-	dino_jump = mcugdx_image_load("dino-jump.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
-	dino_run = mcugdx_image_load("dino-run.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
-	cactus = mcugdx_image_load("cactus.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
-	cloud = mcugdx_image_load("cloud.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
+	dino_jump = mcugdx_image_load("dino-jump.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
+	dino_run = mcugdx_image_load("dino-run.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
+	cactus = mcugdx_image_load("cactus.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
+	cloud = mcugdx_image_load("cloud.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
 	grass = mcugdx_image_load("grass.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
-	ground = mcugdx_image_load("ground.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
-	hill = mcugdx_image_load("hill.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
+	ground = mcugdx_image_load("ground.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
+	hill = mcugdx_image_load("hill.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
 	pterodactylus = mcugdx_image_load("pterodactylus.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
 	pterodactylus2 = mcugdx_image_load("pterodactylus-2.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
-	sky = mcugdx_image_load("sky.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
 
 	dino_run_anim = (animation_t){
 			.img = dino_run,
@@ -220,9 +219,41 @@ void load() {
 	}
 }
 
+uint16_t rgb32_to_rgb16(uint32_t rgb32) {
+	return (rgb32 >> 8 & 0xf800) | (rgb32 >> 5 & 0x07e0) | (rgb32 >> 3 & 0x001f);
+}
+
 void draw_background() {
-	for (int x = 0; x < 2 * sky->width; x += sky->width) {
-		mcugdx_display_blit(sky, x, 0);
+	int32_t sky_pattern[] = {
+			12, 0x4a5786,
+			2, 0x577f9d,
+			4, 0x4a5786,
+			2, 0x577f9d,
+			2, 0x4a5786,
+
+			34, 0x577f9d,
+			2, 0x6fb0b7,
+			3, 0x577f9d,
+			2, 0x6fb0b7,
+			2, 0x577f9d,
+
+			30, 0x6fb0b7,
+			2, 0xa0ddd3,
+			3, 0x6fb0b7,
+			2, 0xa0ddd3,
+			2, 0x6fb0b7,
+
+			46, 0xa0ddd3,
+			0};
+
+	int32_t idx = 0;
+	int32_t sky_y = 0;
+	while (true) {
+		int32_t num_rows = sky_pattern[idx++];
+		if (num_rows == 0) break;
+		int32_t color = rgb32_to_rgb16(sky_pattern[idx++]);
+		mcugdx_display_rect(0, sky_y, 320, num_rows, color);
+		sky_y += num_rows;
 	}
 
 	for (int x = 0; x < 3 * cloud->width; x += cloud->width) {
@@ -234,7 +265,7 @@ void draw_background() {
 	}
 
 	for (int x = 0; x < 6 * ground->width; x += ground->width) {
-		mcugdx_display_blit(ground, ground_x + x, 240 - ground->height);
+		mcugdx_display_blit(ground, ceilf(ground_x + x), 240 - ground->height);
 	}
 }
 
@@ -245,23 +276,26 @@ void draw_objects() {
 	for (int i = 0; i < NUM_OBSTACLES; i++) {
 		obstacle_t *obst = &obstacles[i];
 
+		int32_t x = obst->x;
+		int32_t y = obst->y;
+
 		if (obst->type == OBSTACLE_CACTUS_1) {
-			mcugdx_display_blit_region_keyed(cactus, obst->x, obst->y, obst->cactus.frame1 * cactus_width, 0, cactus_width, cactus->height, 0);
+			mcugdx_display_blit_region_keyed(cactus, x, y, obst->cactus.frame1 * cactus_width, 0, cactus_width, cactus->height, 0);
 		}
 
 		if (obst->type == OBSTACLE_CACTUS_2) {
-			mcugdx_display_blit_region_keyed(cactus, obst->x, obst->y, obst->cactus.frame1 * cactus_width, 0, cactus_width, cactus->height, 0);
-			mcugdx_display_blit_region_keyed(cactus, obst->x + cactus_width, obst->y, obst->cactus.frame2 * cactus_width, 0, cactus_width, cactus->height, 0);
+			mcugdx_display_blit_region_keyed(cactus, x, y, obst->cactus.frame1 * cactus_width, 0, cactus_width, cactus->height, 0);
+			mcugdx_display_blit_region_keyed(cactus, x + cactus_width, y, obst->cactus.frame2 * cactus_width, 0, cactus_width, cactus->height, 0);
 		}
 
 		if (obst->type == OBSTACLE_CACTUS_3) {
-			mcugdx_display_blit_region_keyed(cactus, obst->x, obst->y, obst->cactus.frame1 * cactus_width, 0, cactus_width, cactus->height, 0);
-			mcugdx_display_blit_region_keyed(cactus, obst->x + cactus_width, obst->y, obst->cactus.frame2 * cactus_width, 0, cactus_width, cactus->height, 0);
-			mcugdx_display_blit_region_keyed(cactus, obst->x + cactus_width * 2, obst->y, obst->cactus.frame3 * cactus_width, 0, cactus_width, cactus->height, 0);
+			mcugdx_display_blit_region_keyed(cactus, x, y, obst->cactus.frame1 * cactus_width, 0, cactus_width, cactus->height, 0);
+			mcugdx_display_blit_region_keyed(cactus, x + cactus_width, y, obst->cactus.frame2 * cactus_width, 0, cactus_width, cactus->height, 0);
+			mcugdx_display_blit_region_keyed(cactus, x + cactus_width * 2, y, obst->cactus.frame3 * cactus_width, 0, cactus_width, cactus->height, 0);
 		}
 
 		if (obst->type == OBSTACLE_PTERO) {
-			animation_draw(&obst->ptero.anim, obst->x, obst->y, 0);
+			animation_draw(&obst->ptero.anim, x, y, 0);
 		}
 	}
 }
@@ -376,25 +410,26 @@ extern "C" void app_main() {
 			.sck = 4,
 			.dc = 2,
 			.cs = 1,
-			.reset = -1};
+			.reset = 17};
 	mcugdx_display_init(&display_config);
 	mcugdx_display_set_orientation(MCUGDX_LANDSCAPE);
 
 	load();
-	mcugdx_mem_print();
 
-	escape_key = mcugdx_button_create(2, 25, MCUGDX_KEY_ESCAPE);
-	jump_button = mcugdx_button_create(3, 25, MCUGDX_KEY_SPACE);
-	speed_plus_button = mcugdx_button_create(4, 25, MCUGDX_KEY_J);
-	speed_minus_button = mcugdx_button_create(5, 25, MCUGDX_KEY_K);
+	escape_key = mcugdx_button_create(12, 25, MCUGDX_KEY_ESCAPE);
+	jump_button = mcugdx_button_create(11, 25, MCUGDX_KEY_SPACE);
+	// speed_plus_button = mcugdx_button_create(4, 25, MCUGDX_KEY_J);
+	// speed_minus_button = mcugdx_button_create(5, 25, MCUGDX_KEY_K);
+
+	mcugdx_mem_print();
 
 	int frame = 0;
 	float last_time = mcugdx_time();
 	float delta_time = 0;
 	while (true) {
 		float now = mcugdx_time();
-		delta_time = now - last_time;
-		delta_time = 0.016;
+		delta_time = 0.016;// now - last_time;
+		last_time = now;
 
 		if (!update_state(delta_time)) {
 			return;
@@ -409,7 +444,7 @@ extern "C" void app_main() {
 		if (frame % 60 * 5 == 0) {
 			double time = mcugdx_time();
 			double total = time - now;
-			mcugdx_log(TAG, "total: %.3f ms", total * 1000);
+			mcugdx_log(TAG, "total: %.3f ms, fps: %.3f, delta: %.5f", total * 1000, 1000.0f / (total * 1000), delta_time);
 		}
 	}
 }
