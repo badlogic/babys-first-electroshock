@@ -90,7 +90,7 @@ animation_t pterodactylus2_anim = {0};
 // Derrived from https://youtu.be/hG9SzQxaCm8?si=nk-uSBAlHBp1ftW7&t=781
 float jump_height = 120.0f;
 float jump_distance = 210.0f;
-float velocity_x = 128;
+float velocity_x = 120;
 
 float calculate_velocity_y() {
 	return 2 * jump_height * velocity_x / (jump_distance / 2);
@@ -309,7 +309,7 @@ bool update_state(float delta_time) {
 	if (-parallax_cloud_x > cloud->width) parallax_cloud_x = 0;
 	parallax_hill_x -= PARALLAX_HILL_FACTOR * velocity_x * delta_time;
 	if (-parallax_hill_x > hill->width) parallax_hill_x = 0;
-	ground_x -= velocity_x * delta_time;
+	ground_x -= 2; // velocity_x * delta_time;
 	if (-ground_x > ground->width) ground_x = 0;
 
 	static bool space_held = false;
@@ -362,7 +362,7 @@ bool update_state(float delta_time) {
 
 	for (int i = 0; i < NUM_OBSTACLES; i++) {
 		obstacle_t *obst = &obstacles[i];
-		obst->x -= obst->vx * delta_time;
+		obst->x -= 2; // obst->vx * delta_time;
 
 		switch (obst->type) {
 			case OBSTACLE_CACTUS_1:
@@ -428,7 +428,7 @@ extern "C" void app_main() {
 	float delta_time = 0;
 	while (true) {
 		float now = mcugdx_time();
-		delta_time = 0.016;// now - last_time;
+		delta_time = now - last_time;
 		last_time = now;
 
 		if (!update_state(delta_time)) {
