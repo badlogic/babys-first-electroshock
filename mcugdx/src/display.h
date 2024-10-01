@@ -18,6 +18,7 @@ extern "C" {
 
 typedef enum {
 	MCUGDX_ST7789,
+	MCUGDX_ST7796,
 	MCUGDX_ILI9341
 } mcugdx_display_driver_t;
 

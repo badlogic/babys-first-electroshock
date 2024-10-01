@@ -242,7 +242,6 @@ void mcugdx_display_blit_region(mcugdx_image_t *src, int32_t dst_x, int32_t dst_
 }
 
 void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_t dst_y, int32_t src_x, int32_t src_y, int32_t src_width, int32_t src_height, uint16_t color_key) {
-	// 1. Clipping
 	int32_t clip_src_x = src_x;
 	int32_t clip_src_y = src_y;
 	int32_t clip_dst_x = dst_x;
@@ -250,7 +249,6 @@ void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_
 	int32_t clip_width = src_width;
 	int32_t clip_height = src_height;
 
-	// Clip source left and top
 	if (clip_src_x < 0) {
 		clip_width += clip_src_x;
 		clip_dst_x -= clip_src_x;
@@ -262,7 +260,6 @@ void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_
 		clip_src_y = 0;
 	}
 
-	// Clip source right and bottom
 	if (clip_src_x + clip_width > (int32_t) src->width) {
 		clip_width = src->width - clip_src_x;
 	}
@@ -270,7 +267,6 @@ void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_
 		clip_height = src->height - clip_src_y;
 	}
 
-	// Clip destination left and top
 	if (clip_dst_x < 0) {
 		clip_width += clip_dst_x;
 		clip_src_x -= clip_dst_x;
@@ -282,7 +278,6 @@ void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_
 		clip_dst_y = 0;
 	}
 
-	// Clip destination right and bottom
 	if (clip_dst_x + clip_width > (int32_t) display.width) {
 		clip_width = display.width - clip_dst_x;
 	}
@@ -290,12 +285,10 @@ void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_
 		clip_height = display.height - clip_dst_y;
 	}
 
-	// Early exit if nothing to draw
 	if (clip_width <= 0 || clip_height <= 0) {
 		return;
 	}
 
-	// 2. Pixel copying with optimizations
 	uint16_t *src_row = &src->pixels[clip_src_y * src->width + clip_src_x];
 	uint16_t *dst_row = &display.frame_buffer[clip_dst_y * display.width + clip_dst_x];
 	int32_t src_stride = src->width;
@@ -322,7 +315,6 @@ void mcugdx_display_blit_region_keyed(mcugdx_image_t *src, int32_t dst_x, int32_
 			*dst_ptr++ = dst_pixels;
 		}
 
-		// Handle odd pixel if width is odd
 		if (clip_width & 1) {
 			uint16_t src_pixel = ((uint16_t *) src_ptr)[0];
 			if (src_pixel != color_key) {

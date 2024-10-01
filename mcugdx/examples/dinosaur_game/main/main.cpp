@@ -101,9 +101,11 @@ float calculate_gravity() {
 }
 
 float calculate_velocity_x(float delta_time) {
-	// idiot way to check if we are at 60fps or 120fps
+	// idiot way to check if we are at 30fps, 60fps or 120fps
 	// Adjust velocity accordingly.
-	return delta_time < 0.015 ? 1 : 2;
+	if (delta_time > 0.03) return 4;
+	if (delta_time < 0.015) return 1;
+	return 2;
 }
 
 dino_t dino;

@@ -275,6 +275,10 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			device_config.clock_speed_hz = SPI_MASTER_FREQ_80M;
 			pixel_order = MADCTL_RGB;
 			break;
+		case MCUGDX_ST7796:
+			device_config.clock_speed_hz = SPI_MASTER_FREQ_80M;
+			pixel_order = MADCTL_BGR;
+			break;
 		case MCUGDX_ILI9341:
 			device_config.clock_speed_hz = SPI_MASTER_FREQ_40M;
 			pixel_order = MADCTL_BGR;
@@ -311,6 +315,7 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			init_st7789(spi_handle, dc);
 			break;
 		case MCUGDX_ILI9341:
+		case MCUGDX_ST7796:
 			init_ili9143(spi_handle, dc);
 			break;
 		default:
