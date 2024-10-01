@@ -23,7 +23,7 @@ typedef struct {
 	mcugdx_keycode_t keycode;
 } mcugdx_button_event_t;
 
-mcugdx_button_handle_t mcugdx_button_create(int pin, uint32_t debounce_time_ms, uint16_t keycode);
+mcugdx_button_handle_t mcugdx_button_create(int pin, uint32_t debounce_time_ms, mcugdx_keycode_t keycode);
 void mcugdx_button_destroy(mcugdx_button_handle_t handle);
 bool mcugdx_button_is_pressed(mcugdx_button_handle_t handle);
 bool mcugdx_button_get_event(mcugdx_button_event_t *event);

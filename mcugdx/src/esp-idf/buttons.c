@@ -57,7 +57,7 @@ static void mcugdx_button_init(void) {
 	}
 }
 
-mcugdx_button_handle_t mcugdx_button_create(int pin, uint32_t debounce_time_ms, uint16_t keycode) {
+mcugdx_button_handle_t mcugdx_button_create(int pin, uint32_t debounce_time_ms, mcugdx_keycode_t keycode) {
 	mcugdx_button_init();
 	for (int i = 0; i < MAX_BUTTONS; i++) {
 		if (buttons[i].pin == -1) {

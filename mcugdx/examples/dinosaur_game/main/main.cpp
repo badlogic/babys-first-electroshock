@@ -90,7 +90,7 @@ animation_t pterodactylus2_anim = {0};
 // Derrived from https://youtu.be/hG9SzQxaCm8?si=nk-uSBAlHBp1ftW7&t=781
 float jump_height = 120.0f;
 float jump_distance = 210.0f;
-float velocity_x = 120;
+float velocity_x = 120; // 2 px per second
 
 float calculate_velocity_y() {
 	return 2 * jump_height * velocity_x / (jump_distance / 2);
@@ -98,6 +98,12 @@ float calculate_velocity_y() {
 
 float calculate_gravity() {
 	return -2 * jump_height * velocity_x * velocity_x / ((jump_distance / 2) * (jump_distance / 2));
+}
+
+float calculate_velocity_x(float delta_time) {
+	// idiot way to check if we are at 60fps or 120fps
+	// Adjust velocity accordingly.
+	return delta_time < 0.015 ? 1 : 2;
 }
 
 dino_t dino;
@@ -309,7 +315,7 @@ bool update_state(float delta_time) {
 	if (-parallax_cloud_x > cloud->width) parallax_cloud_x = 0;
 	parallax_hill_x -= PARALLAX_HILL_FACTOR * velocity_x * delta_time;
 	if (-parallax_hill_x > hill->width) parallax_hill_x = 0;
-	ground_x -= 2; // velocity_x * delta_time;
+	ground_x -= calculate_velocity_x(delta_time); // velocity_x * delta_time;
 	if (-ground_x > ground->width) ground_x = 0;
 
 	static bool space_held = false;
@@ -362,7 +368,7 @@ bool update_state(float delta_time) {
 
 	for (int i = 0; i < NUM_OBSTACLES; i++) {
 		obstacle_t *obst = &obstacles[i];
-		obst->x -= 2; // obst->vx * delta_time;
+		obst->x -= calculate_velocity_x(delta_time); // obst->vx * delta_time;
 
 		switch (obst->type) {
 			case OBSTACLE_CACTUS_1:

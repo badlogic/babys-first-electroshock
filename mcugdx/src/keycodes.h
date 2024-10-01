@@ -55,8 +55,6 @@ typedef enum {
     MCUGDX_KEY_BACKSLASH     = 92,
     MCUGDX_KEY_RIGHT_BRACKET = 93,
     MCUGDX_KEY_GRAVE_ACCENT  = 96,
-    MCUGDX_KEY_WORLD_1       = 161,
-    MCUGDX_KEY_WORLD_2       = 162,
 
     MCUGDX_KEY_ESCAPE        = 256,
     MCUGDX_KEY_ENTER         = 257,

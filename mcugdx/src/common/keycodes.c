@@ -51,8 +51,6 @@ const char* mcugdx_keycode_to_string(mcugdx_keycode_t keycode) {
         case MCUGDX_KEY_BACKSLASH: return "BACKSLASH";
         case MCUGDX_KEY_RIGHT_BRACKET: return "RIGHT_BRACKET";
         case MCUGDX_KEY_GRAVE_ACCENT: return "GRAVE_ACCENT";
-        case MCUGDX_KEY_WORLD_1: return "WORLD_1";
-        case MCUGDX_KEY_WORLD_2: return "WORLD_2";
         case MCUGDX_KEY_ESCAPE: return "ESCAPE";
         case MCUGDX_KEY_ENTER: return "ENTER";
         case MCUGDX_KEY_TAB: return "TAB";
