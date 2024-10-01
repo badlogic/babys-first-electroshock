@@ -1,32 +1,24 @@
 #include "mcugdx.h"
+#include <SDL.h>
 #include <stdio.h>
-#include "MiniFB.h"
-#include "MiniFB_enums.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#elif defined(__APPLE__) || defined(__linux__)
-#include <unistd.h>
-#else
-#error "Unsupported platform"
-#endif
-
-struct mfb_timer *timer;
+static Uint64 start_time;
 
 void mcugdx_init(void) {
-	timer = mfb_timer_create();
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {
+        printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+        exit(1);
+    }
+    start_time = SDL_GetPerformanceCounter();
 }
 
 double mcugdx_time(void) {
-	return mfb_timer_now(timer);
+    Uint64 now = SDL_GetPerformanceCounter();
+    return (double)(now - start_time) / SDL_GetPerformanceFrequency();
 }
 
 void mcugdx_sleep(uint32_t milliseconds) {
-#ifdef _WIN32
-	Sleep(milliseconds);
-#elif defined(__APPLE__) || defined(__linux__)
-	usleep(milliseconds * 1000);
-#endif
+    SDL_Delay(milliseconds);
 }
 
 extern void app_main(void);

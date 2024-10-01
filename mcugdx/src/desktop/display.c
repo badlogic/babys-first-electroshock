@@ -6,9 +6,6 @@
 
 #define TAG "mcugdx_display"
 
-#define DEFAULT_FPS 60.0f
-static float frame_delay = 1000.0f / DEFAULT_FPS;
-
 static uint32_t *frame_buffer_32;
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -72,9 +69,6 @@ void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {
 }
 
 void mcugdx_display_show(void) {
-	Uint32 frame_start, frame_time;
-	frame_start = SDL_GetTicks();
-
 	uint32_t *dst = frame_buffer_32;
 	uint16_t *src = display.frame_buffer;
 	int num_pixels = display.width * display.height;
@@ -105,11 +99,6 @@ void mcugdx_display_show(void) {
 		} else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
 			mcugdx_desktop_update_button(&event.key);
 		}
-	}
-
-	frame_time = SDL_GetTicks() - frame_start;
-	if (frame_delay > frame_time) {
-		// SDL_Delay(frame_delay - frame_time);
 	}
 }
 
