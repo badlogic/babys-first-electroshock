@@ -312,11 +312,11 @@ bool update_state(float delta_time) {
 	}
 
 	parallax_cloud_x -= PARALLAX_CLOUD_FACTOR * velocity_x * delta_time;
-	if (-parallax_cloud_x > cloud->width) parallax_cloud_x = 0;
+	if (-parallax_cloud_x >= cloud->width) parallax_cloud_x = 0;
 	parallax_hill_x -= PARALLAX_HILL_FACTOR * velocity_x * delta_time;
-	if (-parallax_hill_x > hill->width) parallax_hill_x = 0;
+	if (-parallax_hill_x >= hill->width) parallax_hill_x = 0;
 	ground_x -= calculate_velocity_x(delta_time); // velocity_x * delta_time;
-	if (-ground_x > ground->width) ground_x = 0;
+	if (-ground_x >= ground->width) ground_x = 0;
 
 	static bool space_held = false;
 	static float gravity_factor = 1;
