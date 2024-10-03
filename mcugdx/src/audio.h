@@ -40,8 +40,6 @@ typedef enum {
 
 typedef uint32_t mcugdx_sound_id_t;
 
-typedef uint32_t mcugdx_music_id_t;
-
 bool mcugdx_audio_init(mcugdx_audio_config_t *config);
 
 void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channels_t channels);
@@ -66,7 +64,7 @@ void mcugdx_sound_set_pan(mcugdx_sound_id_t sound_instance, uint8_t pan);
 
 void mcugdx_sound_stop(mcugdx_sound_id_t sound_instance);
 
-bool mcugdx_sound_is_playing(mcugdx_music_id_t sound_instance);
+bool mcugdx_sound_is_playing(mcugdx_sound_id_t sound_instance);
 
 #ifdef __cplusplus
 }
