@@ -74,7 +74,7 @@ extern "C" void app_main() {
 	mcugdx_mem_print();
 
 	double load_start = mcugdx_time();
-	mcugdx_image_t *bear = mcugdx_image_load("bear.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
+	mcugdx_image_t *bear = mcugdx_image_load("bear.qoi", &mcugdx_rofs, MCUGDX_MEM_INTERNAL);
 	mcugdx_log(TAG, "Load took: %f", (mcugdx_time() - load_start));
 	mcugdx_mem_print();
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "result.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,6 +10,7 @@ extern "C" {
 #include <windows.h>
 typedef CRITICAL_SECTION mcugdx_mutex_t;
 #elif defined(__APPLE__) || defined(__linux__)
+#include <stddef.h>
 #include <pthread.h>
 typedef pthread_mutex_t mcugdx_mutex_t;
 #elif defined(ESP_PLATFORM)
@@ -20,7 +21,7 @@ typedef SemaphoreHandle_t mcugdx_mutex_t;
 #error "Unsupported platform"
 #endif
 
-mcugdx_result_t mcugdx_mutex_init(mcugdx_mutex_t *mutex);
+bool mcugdx_mutex_init(mcugdx_mutex_t *mutex);
 void mcugdx_mutex_lock(mcugdx_mutex_t *mutex);
 void mcugdx_mutex_unlock(mcugdx_mutex_t *mutex);
 void mcugdx_mutex_destroy(mcugdx_mutex_t *mutex);

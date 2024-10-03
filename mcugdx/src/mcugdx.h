@@ -14,12 +14,9 @@ extern "C" {
 #include "ultrasonic.h"
 #include "neopixels.h"
 #include "buttons.h"
+#include "time.h"
 
 void mcugdx_init(void);
-
-double mcugdx_time(void);
-
-void mcugdx_sleep(uint32_t millies);
 
 #ifdef __cplusplus
 }

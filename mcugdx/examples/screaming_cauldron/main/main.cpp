@@ -107,19 +107,19 @@ extern "C" void app_main() {
 	mcugdx_audio_init(&audio_config);
 	mcugdx_audio_set_master_volume(255);
 	mcugdx_sound_t *sounds[] = {
-                    mcugdx_sound_load("scream11.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream12.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream13.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream1.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-			//mcugdx_sound_load("scream2.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream3.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream4.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream5.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream6.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream7.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream8.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream9.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream10.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream11.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream12.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream13.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream1.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+			//mcugdx_sound_load("scream2.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream3.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream4.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream5.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream6.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream7.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream8.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream9.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
+            mcugdx_sound_load("scream10.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
 };
 	size_t num_sounds = sizeof(sounds) / sizeof(sounds[0]);
 
@@ -128,7 +128,8 @@ extern "C" void app_main() {
 			//.trigger = 2,
 			//.echo = 3};
             .trigger = 1,
-			.echo = 2};
+			.echo = 2,
+            .interval = ULTRASONIC_INTERVAL};
 	mcugdx_ultrasonic_init(&ultrasonic_config);
 	last_ultrasonic_time = mcugdx_time();
 
@@ -141,7 +142,7 @@ extern "C" void app_main() {
 
     while (true) {
         uint32_t distance = 0;
-        if (mcugdx_time() - last_ultrasonic_time > ULTRASONIC_INTERVAL && mcugdx_ultrasonic_measure(20, &distance)) {
+        if (mcugdx_ultrasonic_measure(20, &distance)) {
             if (curr_sound == -1 && distance < 10) {
                 mcugdx_log(TAG, "Hand detected, playing sound");
                 curr_sound = mcugdx_sound_play(sounds[sound_index++], 128, 0, MCUGDX_SINGLE_SHOT);

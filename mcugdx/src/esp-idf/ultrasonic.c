@@ -12,6 +12,7 @@
 #include "ultrasonic.h"
 #include "mutex.h"
 #include "log.h"
+#include "time.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -30,6 +31,9 @@
 static mcugdx_mutex_t mutex;
 static int trigger;
 static int echo;
+static uint32_t last_distance;
+static uint32_t last_time;
+static uint32_t interval;
 
 static inline uint32_t get_time_us() {
 	struct timeval tv;
@@ -37,13 +41,15 @@ static inline uint32_t get_time_us() {
 	return tv.tv_usec;
 }
 
-mcugdx_result_t mcugdx_ultrasonic_init(mcugdx_ultrasonic_config_t *config) {
+bool mcugdx_ultrasonic_init(mcugdx_ultrasonic_config_t *config) {
 	if (!mcugdx_mutex_init(&mutex)) {
 		mcugdx_loge(TAG, "Could not create mutex");
-		return MCUGDX_ERROR;
+		return false;
 	}
 	trigger = config->trigger;
 	echo = config->echo;
+	last_distance = 0;
+	last_time = 0;
 
 	gpio_reset_pin(trigger);
 	gpio_reset_pin(echo);
@@ -53,14 +59,21 @@ mcugdx_result_t mcugdx_ultrasonic_init(mcugdx_ultrasonic_config_t *config) {
 
 	mcugdx_log(TAG, "Ultrasonic sensor initialized, trigger: %li, echo: %li", trigger, echo);
 
-	return MCUGDX_OK;
+	return true;
 }
 
-mcugdx_result_t mcugdx_ultrasonic_measure(uint32_t max_distance, uint32_t *distance) {
+bool mcugdx_ultrasonic_measure(uint32_t max_distance, uint32_t *distance) {
 	if (!distance) {
 		mcugdx_loge(TAG, "No distance argument provided");
-		return MCUGDX_ERROR;
+		return false;
 	}
+
+	uint32_t now = mcugdx_time();
+	if (now - last_ultrasonic_time < interval) {
+		*distance = last_distance;
+		return true;
+	}
+	last_time = now;
 
 	gpio_set_level(trigger, 0);
 	esp_rom_delay_us(TRIGGER_LOW_DELAY);
@@ -70,14 +83,14 @@ mcugdx_result_t mcugdx_ultrasonic_measure(uint32_t max_distance, uint32_t *dista
 
 	if (gpio_get_level(echo)) {
 		mcugdx_loge(TAG, "Previous ping hasn't ended");
-		return MCUGDX_ERROR;
+		return false;
 	}
 
 	uint32_t start = get_time_us();
 	while (!gpio_get_level(echo)) {
 		if (timeout_expired(start, PING_TIMEOUT)) {
 			mcugdx_loge(TAG, "No echo received");
-			return MCUGDX_ERROR;
+			return false;
 		}
 	}
 
@@ -88,10 +101,10 @@ mcugdx_result_t mcugdx_ultrasonic_measure(uint32_t max_distance, uint32_t *dista
 		time = get_time_us();
 		if (timeout_expired(echo_start, meas_timeout)) {
 			mcugdx_loge(TAG, "Echo didn't end");
-			return MCUGDX_ERROR;
+			return false;
 		}
 	}
 
 	*distance = (time - echo_start) / ROUNDTRIP;
-	return MCUGDX_OK;
+	return true;
 }

@@ -231,7 +231,7 @@ void init_ili9143(spi_device_handle_t device, int dc) {
 	spi_write_command(device, dc, 0x29);//Display ON
 }
 
-mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
+bool mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	// Setup SPI2 bus
 	spi_bus_config_t bus_config = {
 			.mosi_io_num = display_cfg->mosi,
@@ -248,7 +248,7 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 
 	esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_config, SPI_DMA_CH_AUTO);
 	if (ret != ESP_OK) {
-		return MCUGDX_ERROR;
+		return false;
 	}
 	mcugdx_log(TAG, "Initialized SPI bus");
 
@@ -285,7 +285,7 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			break;
 		default:
 			mcugdx_loge(TAG, "Unknown display driver %i\n", display_cfg->driver);
-			return MCUGDX_ERROR;
+			return false;
 	}
 	device_config.queue_size = 7;
 	device_config.mode = 3;
@@ -320,12 +320,12 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 			break;
 		default:
 			mcugdx_loge(TAG, "Unknown display driver %i\n", driver);
-			return MCUGDX_ERROR;
+			return false;
 	}
 
 	// Set orientation to portrait by default
 	mcugdx_display_set_orientation(MCUGDX_PORTRAIT);
-	return MCUGDX_OK;
+	return true;
 }
 
 void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {

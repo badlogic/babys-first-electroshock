@@ -16,7 +16,7 @@ extern size_t internal_mem;
 
 extern void mcugdx_desktop_update_button(SDL_KeyboardEvent *event);
 
-mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
+bool mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 	display.native_width = display.width = display_cfg->native_width;
 	display.native_height = display.height = display_cfg->native_height;
 	display.orientation = MCUGDX_PORTRAIT;
@@ -25,11 +25,11 @@ mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg) {
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		mcugdx_loge(TAG, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-		return MCUGDX_ERROR;
+		return false;
 	}
 
 	mcugdx_display_set_orientation(MCUGDX_PORTRAIT);
-	return (window && renderer && texture) ? MCUGDX_OK : MCUGDX_ERROR;
+	return (window && renderer && texture);
 }
 
 void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation) {

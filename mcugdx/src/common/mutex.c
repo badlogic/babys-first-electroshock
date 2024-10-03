@@ -1,14 +1,15 @@
 #include "mutex.h"
+#include <stdint.h>
 
-mcugdx_result_t mcugdx_mutex_init(mcugdx_mutex_t *mutex) {
+bool mcugdx_mutex_init(mcugdx_mutex_t *mutex) {
 #ifdef _WIN32
 	InitializeCriticalSection(mutex);
-	return MCUGDX_OK;
+	return true;
 #elif defined(__APPLE__) || defined(__linux__)
-	return pthread_mutex_init(mutex, NULL) ? MCUGDX_ERROR : MCUGDX_OK;
+	return pthread_mutex_init(mutex, 0) ? false : true;
 #elif defined(ESP_PLATFORM)
 	*mutex = xSemaphoreCreateMutex();
-	return (*mutex != NULL) ? MCUGDX_OK : MCUGDX_ERROR;
+	return (*mutex != NULL) ? true : false;
 #endif
 }
 

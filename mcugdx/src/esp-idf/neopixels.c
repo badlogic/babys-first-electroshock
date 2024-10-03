@@ -16,7 +16,7 @@ static size_t num_spi_bytes;
 static spi_device_handle_t spi;
 extern size_t internal_mem;
 
-mcugdx_result_t mcugdx_neopixels_init(mcugdx_neopixels_config_t *user_config) {
+bool mcugdx_neopixels_init(mcugdx_neopixels_config_t *user_config) {
 	config = *user_config;
 	num_spi_bytes = config.num_leds * 3 * 4;// 4 bytes spi bytes per pixel byte, 1 byte per 2 bits
 
@@ -35,7 +35,7 @@ mcugdx_result_t mcugdx_neopixels_init(mcugdx_neopixels_config_t *user_config) {
 
 	if (spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO) != ESP_OK) {
 		mcugdx_loge(TAG, "Could not initialize SPI bus");
-		return MCUGDX_ERROR;
+		return false;
 	}
 
 	spi_device_interface_config_t devcfg = {
@@ -48,7 +48,7 @@ mcugdx_result_t mcugdx_neopixels_init(mcugdx_neopixels_config_t *user_config) {
 	if (spi_bus_add_device(SPI2_HOST, &devcfg, &spi) != ESP_OK) {
 		mcugdx_loge(TAG, "Could not add SPI device");
 		spi_bus_free(SPI2_HOST);
-		return MCUGDX_ERROR;
+		return false;
 	}
 
 	pixels = mcugdx_mem_alloc(sizeof(mcugdx_neopixel_t) * config.num_leds, MCUGDX_MEM_INTERNAL);
@@ -58,7 +58,7 @@ mcugdx_result_t mcugdx_neopixels_init(mcugdx_neopixels_config_t *user_config) {
 
 	mcugdx_log(TAG, "Initialized %li neopixels", config.num_leds);
 
-	return MCUGDX_OK;
+	return true;
 }
 
 void mcugdx_neopixels_set(uint32_t index, uint8_t r, uint8_t g, uint8_t b) {

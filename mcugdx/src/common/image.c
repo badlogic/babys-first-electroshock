@@ -5,9 +5,9 @@
 #define QOI_IMPLEMENTATION
 #include "qoi.h"
 
-mcugdx_image_t *mcugdx_image_load(const char *path, mcugdx_read_file_func_t read_file, mcugdx_memory_type_t mem_type) {
+mcugdx_image_t *mcugdx_image_load(const char *path, mcugdx_file_system_t *fs, mcugdx_memory_type_t mem_type) {
 	uint32_t size;
-	uint8_t *raw_bytes = read_file(path, &size, mem_type);
+	uint8_t *raw_bytes = fs->read_fully(path, &size, mem_type);
 	if (!raw_bytes) return NULL;
 
 	qoi_desc desc;

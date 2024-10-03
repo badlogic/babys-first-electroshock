@@ -173,15 +173,15 @@ void generate_obstacle(int index) {
 }
 
 void load() {
-	dino_jump = mcugdx_image_load("dino-jump.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
-	dino_run = mcugdx_image_load("dino-run.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
-	cactus = mcugdx_image_load("cactus.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
-	cloud = mcugdx_image_load("cloud.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
-	grass = mcugdx_image_load("grass.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
-	ground = mcugdx_image_load("ground.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
-	hill = mcugdx_image_load("hill.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_INTERNAL);
-	pterodactylus = mcugdx_image_load("pterodactylus.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
-	pterodactylus2 = mcugdx_image_load("pterodactylus-2.qoi", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
+	dino_jump = mcugdx_image_load("dino-jump.qoi", &mcugdx_rofs, MCUGDX_MEM_INTERNAL);
+	dino_run = mcugdx_image_load("dino-run.qoi", &mcugdx_rofs, MCUGDX_MEM_INTERNAL);
+	cactus = mcugdx_image_load("cactus.qoi", &mcugdx_rofs, MCUGDX_MEM_INTERNAL);
+	cloud = mcugdx_image_load("cloud.qoi", &mcugdx_rofs, MCUGDX_MEM_INTERNAL);
+	grass = mcugdx_image_load("grass.qoi", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL);
+	ground = mcugdx_image_load("ground.qoi", &mcugdx_rofs, MCUGDX_MEM_INTERNAL);
+	hill = mcugdx_image_load("hill.qoi", &mcugdx_rofs, MCUGDX_MEM_INTERNAL);
+	pterodactylus = mcugdx_image_load("pterodactylus.qoi", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL);
+	pterodactylus2 = mcugdx_image_load("pterodactylus-2.qoi", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL);
 
 	dino_run_anim = (animation_t){
 			.img = dino_run,
@@ -401,14 +401,14 @@ extern "C" void app_main() {
 	mcugdx_init();
 	mcugdx_rofs_init();
 
-	mcugdx_audio_config_t audio_config = {
+	/*mcugdx_audio_config_t audio_config = {
 			.sample_rate = 44100,
 			.channels = MCUGDX_STEREO,
 			.bclk = 47,
 			.ws = 21,
 			.dout = 38};
 	mcugdx_audio_init(&audio_config);
-	mcugdx_audio_set_master_volume(64);
+	mcugdx_audio_set_master_volume(64);*/
 
 	mcugdx_display_config_t display_config = {
 			.driver = MCUGDX_ST7789,
@@ -418,14 +418,17 @@ extern "C" void app_main() {
 			.sck = 4,
 			.dc = 2,
 			.cs = 1,
-			.reset = 17};
+			.reset = -1};
 	mcugdx_display_init(&display_config);
 	mcugdx_display_set_orientation(MCUGDX_LANDSCAPE);
 
 	load();
 
+	//mcugdx_sound_t *music = mcugdx_sound_load("music.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL);
+	//mcugdx_sound_play(music, 256, 127, MCUGDX_LOOP);
+
 	escape_key = mcugdx_button_create(12, 25, MCUGDX_KEY_ESCAPE);
-	jump_button = mcugdx_button_create(11, 25, MCUGDX_KEY_SPACE);
+	jump_button = mcugdx_button_create(5, 25, MCUGDX_KEY_SPACE);
 	// speed_plus_button = mcugdx_button_create(4, 25, MCUGDX_KEY_J);
 	// speed_minus_button = mcugdx_button_create(5, 25, MCUGDX_KEY_K);
 

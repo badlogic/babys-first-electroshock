@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include "result.h"
 #include "image.h"
 
 #ifdef __cplusplus
@@ -47,7 +46,7 @@ typedef struct {
 	uint16_t *frame_buffer;
 } mcugdx_display_t;
 
-mcugdx_result_t mcugdx_display_init(mcugdx_display_config_t *display_cfg);
+bool mcugdx_display_init(mcugdx_display_config_t *display_cfg);
 
 void mcugdx_display_set_orientation(mcugdx_display_orientation_t orientation);
 

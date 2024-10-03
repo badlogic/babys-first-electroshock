@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "files.h"
 
@@ -27,6 +28,13 @@ typedef struct {
 	uint32_t num_frames;
 } mcugdx_sound_t;
 
+typedef struct {
+	uint32_t sample_rate;
+	uint32_t channels;
+	int16_t *frames;
+	uint32_t num_frames;
+} mcugdx_music_t;
+
 typedef enum {
 	MCUGDX_SINGLE_SHOT,
 	MCUGDX_LOOP
@@ -34,7 +42,9 @@ typedef enum {
 
 typedef uint32_t mcugdx_sound_id_t;
 
-mcugdx_result_t mcugdx_audio_init(mcugdx_audio_config_t *config);
+typedef uint32_t mcugdx_music_id_t;
+
+bool mcugdx_audio_init(mcugdx_audio_config_t *config);
 
 void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channels_t channels);
 
@@ -44,7 +54,7 @@ uint8_t mcugdx_audio_get_master_volume(void);
 
 uint32_t mcugdx_audio_get_sample_rate(void);
 
-mcugdx_sound_t *mcugdx_sound_load(const char *path, mcugdx_read_file_func_t read_file, mcugdx_memory_type_t mem_type);
+mcugdx_sound_t *mcugdx_sound_load(const char *path, mcugdx_file_system_t *fs, mcugdx_memory_type_t mem_type);
 
 void mcugdx_sound_unload(mcugdx_sound_t *sound);
 
@@ -56,7 +66,7 @@ void mcugdx_sound_set_volume(mcugdx_sound_id_t sound_instance, uint8_t pan);
 
 void mcugdx_sound_stop(mcugdx_sound_id_t sound_instance);
 
-mcugdx_result_t mcugdx_sound_is_playing(mcugdx_sound_id_t sound_instance);
+bool mcugdx_sound_is_playing(mcugdx_music_id_t sound_instance);
 
 #ifdef __cplusplus
 }

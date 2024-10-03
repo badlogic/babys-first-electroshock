@@ -13,16 +13,16 @@ extern "C" void app_main() {
 			.ws = 21,
 			.dout = 38};
 	mcugdx_audio_init(&audio_config);
-	mcugdx_audio_set_master_volume(64);
+	mcugdx_audio_set_master_volume(128);
 
-	mcugdx_sound_t *sound = mcugdx_sound_load("music-stereo.qoa", mcugdx_rofs_read_file, MCUGDX_MEM_EXTERNAL);
+	mcugdx_sound_t *sound = mcugdx_sound_load("synth.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL);
 	if (sound == NULL) {
 		mcugdx_log(TAG, "Failed to load sound");
 		return;
 	}
 
 	for (int i = 0; i < 1; i++) {
-		mcugdx_sound_play(sound, 255, MCUGDX_LOOP);
+		mcugdx_sound_play(sound, 255, 127, MCUGDX_LOOP);
 	}
 
 	mcugdx_mem_print();

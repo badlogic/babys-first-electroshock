@@ -45,14 +45,14 @@ typedef struct {
 extern wad_file_class_t rofs_wad_file;
 
 static wad_file_t *doom_rofs_open_file(char *path) {
-	if (!mcugdx_rofs_exists(path)) return NULL;
+	if (!mcugdx_rofs.exists(path)) return NULL;
 
 	rofs_wad_file_t *result;
 	result = mcugdx_mem_alloc(sizeof(rofs_wad_file_t), MCUGDX_MEM_EXTERNAL);
-	result->handle = mcugdx_rofs_open(path);
+	result->handle = mcugdx_rofs.open(path);
 	result->wad.file_class = &rofs_wad_file;
 	result->wad.mapped = NULL;
-	result->wad.length = mcugdx_rofs_length(result->handle);
+	result->wad.length = mcugdx_rofs.length(result->handle);
 	return &result->wad;
 }
 
@@ -65,7 +65,7 @@ static void doom_rofs_close_file(wad_file_t *wad) {
 size_t doom_rofs_read(wad_file_t *wad, unsigned int offset,
 					  void *buffer, size_t buffer_len) {
 	rofs_wad_file_t *rofs_wad = (rofs_wad_file_t *) wad;
-	return mcugdx_rofs_read(rofs_wad->handle, offset, buffer, buffer_len);
+	return mcugdx_rofs.read(rofs_wad->handle, offset, buffer, buffer_len);
 }
 
 wad_file_class_t rofs_wad_file = {
@@ -118,7 +118,7 @@ void doom_stop_sound(int handle) {
 }
 
 boolean doom_sound_is_playing(int handle) {
-	return mcugdx_sound_is_playing(handle) == MCUGDX_OK;
+	return mcugdx_sound_is_playing(handle);
 }
 
 void doom_precache_sounds(sfxinfo_t *sounds, int num_sounds) {

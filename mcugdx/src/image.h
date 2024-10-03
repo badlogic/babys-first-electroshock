@@ -1,6 +1,5 @@
 #pragma once
 
-#include "result.h"
 #include "mem.h"
 #include <stdint.h>
 #include "files.h"
@@ -15,7 +14,7 @@ typedef struct {
 	mcugdx_memory_type_t mem_type;
 } mcugdx_image_t;
 
-mcugdx_image_t *mcugdx_image_load(const char *path, mcugdx_read_file_func_t read_file, mcugdx_memory_type_t mem_type);
+mcugdx_image_t *mcugdx_image_load(const char *path, mcugdx_file_system_t *fs, mcugdx_memory_type_t mem_type);
 
 void mcugdx_image_unload(mcugdx_image_t *image);
 

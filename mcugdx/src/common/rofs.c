@@ -4,7 +4,6 @@
 #include <string.h>
 #include "log.h"
 #include "mem.h"
-#include "result.h"
 
 #define TAG "mcugdx_rofs"
 
@@ -53,7 +52,7 @@ void read_line(const void *partition, size_t *offset, char *buffer, size_t max_l
 	buffer[i] = '\0';
 }
 
-uint8_t *rofs_read_file(const char *path, uint32_t *size, mcugdx_memory_type_t mem_type) {
+uint8_t *rofs_read_fully(const char *path, uint32_t *size, mcugdx_memory_type_t mem_type) {
 	for (int i = 0; i < fs.num_files; i++) {
 		if (strcmp(fs.files[i].name, path) == 0) {
 			uint32_t file_offset = fs.files[i].offset;
@@ -158,7 +157,7 @@ void read_line(const uint8_t *partition, size_t *offset, char *buffer, size_t ma
 	buffer[i] = '\0';
 }
 
-uint8_t *rofs_read_file(const char *path, uint32_t *size, mcugdx_memory_type_t mem_type) {
+uint8_t *rofs_read_fully(const char *path, uint32_t *size, mcugdx_memory_type_t mem_type) {
 	(void) mem_type;
 
 	for (uint32_t i = 0; i < fs.num_files; i++) {
@@ -184,19 +183,19 @@ uint8_t *rofs_read_file(const char *path, uint32_t *size, mcugdx_memory_type_t m
 }
 #endif
 
-int rofs_init(void) {
+bool rofs_init(void) {
 #ifdef ESP_PLATFORM
 	partition = esp_partition_find_first(
 			ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "rofs");
 	if (!partition) {
 		mcugdx_loge(TAG, "Failed to find rofs partition\n");
-		return 0;
+		return false;
 	}
 #else
 	partition = read_partition_file();
 	if (!partition) {
 		mcugdx_loge(TAG, "Failed to load rofs.bin\n");
-		return 0;
+		return false;
 	}
 #endif
 
@@ -224,16 +223,16 @@ int rofs_init(void) {
 		fs.files[i].offset += offset;
 	}
 
-	return 1;
+	return true;
 }
 
-mcugdx_result_t rofs_exists(const char *path) {
+bool rofs_exists(const char *path) {
 	for (uint32_t i = 0; i < fs.num_files; i++) {
 		if (strcmp(fs.files[i].name, path) == 0) {
-			return MCUGDX_OK;
+			return true;
 		}
 	}
-	return MCUGDX_ERROR;
+	return false;
 }
 
 rofs_file_handle_t rofs_open(const char *path) {

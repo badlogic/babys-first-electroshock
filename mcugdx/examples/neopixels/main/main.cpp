@@ -8,7 +8,7 @@ extern "C" void app_main() {
 			.num_leds = 31,
 			.pin = 5};
 	if (!mcugdx_neopixels_init(&config)) return;
-	constexpr uint8_t brightness = 255;
+	uint8_t brightness = 255;
 	while (true) {
 		for (int i = 0; i < config.num_leds; i++) {
 			int r = 0, g = 0, b = 0;

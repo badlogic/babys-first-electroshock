@@ -1,6 +1,6 @@
 #pragma once
 
-#include "result.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -18,7 +18,7 @@ typedef struct {
     uint8_t b;
 } mcugdx_neopixel_t;
 
-mcugdx_result_t mcugdx_neopixels_init(mcugdx_neopixels_config_t *config);
+bool mcugdx_neopixels_init(mcugdx_neopixels_config_t *config);
 
 void mcugdx_neopixels_set(uint32_t index, uint8_t r, uint8_t g, uint8_t b);
 

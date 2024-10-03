@@ -34,12 +34,12 @@ void mix_task(void *args) {
 	}
 }
 
-mcugdx_result_t mcugdx_audio_init(mcugdx_audio_config_t *config) {
+bool mcugdx_audio_init(mcugdx_audio_config_t *config) {
 	sample_rate = config->sample_rate;
 	channels = config->channels;
 	if (!mcugdx_mutex_init(&audio_lock)) {
 		mcugdx_loge(TAG, "Could not create audio lock");
-		return MCUGDX_ERROR;
+		return false;
 	}
 
 	i2s_chan_config_t channel_config = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, I2S_ROLE_MASTER);
@@ -67,7 +67,7 @@ mcugdx_result_t mcugdx_audio_init(mcugdx_audio_config_t *config) {
 		mcugdx_loge(TAG, "Could not initialize i2s standard mode");
 		i2s_del_channel(channel);
 		mcugdx_mutex_destroy(&audio_lock);
-		return MCUGDX_ERROR;
+		return false;
 	}
 
 	buffer = (int32_t *) mcugdx_mem_alloc(sizeof(int32_t) * BUFFER_SIZE_IN_FRAMES * config->channels, MCUGDX_MEM_INTERNAL);
@@ -90,9 +90,9 @@ mcugdx_result_t mcugdx_audio_init(mcugdx_audio_config_t *config) {
 		mcugdx_loge(TAG, "Failed to create audio mixing task\n");
 		i2s_del_channel(channel);
 		mcugdx_mutex_destroy(&audio_lock);
-		return MCUGDX_ERROR;
+		return false;
 	}
-	return MCUGDX_OK;
+	return true;
 }
 
 uint32_t mcugdx_audio_get_sample_rate(void) {
