@@ -15,7 +15,7 @@ typedef bool (*mcugdx_fs_exists_func_t)(const char *path);
 typedef mcugdx_file_handle_t (*mcugdx_fs_open_func_t)(const char *path);
 typedef void (*mcugdx_fs_close_func_t)(mcugdx_file_handle_t);
 typedef uint32_t (*mcugdx_fs_length_func_t)(mcugdx_file_handle_t handle);
-typedef uint32_t (*mcugdx_fs_read_func_t)(mcugdx_file_handle_t handle, uint32_t offset, char *buffer, uint32_t buffer_len);
+typedef uint32_t (*mcugdx_fs_read_func_t)(mcugdx_file_handle_t handle, uint32_t offset, uint8_t *buffer, uint32_t buffer_len);
 typedef uint8_t *(*mcugdx_fs_read_fully_func_t)(const char *path, uint32_t *size, mcugdx_memory_type_t mem_type);
 
 typedef struct {

@@ -74,6 +74,7 @@ uint8_t *rofs_read_fully(const char *path, uint32_t *size, mcugdx_memory_type_t 
 	}
 
 	mcugdx_loge(TAG, "File not found: %s\n", path);
+	*size = 0;
 	return NULL;
 }
 
@@ -248,7 +249,7 @@ uint32_t rofs_length(rofs_file_handle_t handle) {
 	return fs.files[handle - 1].size;
 }
 
-uint32_t rofs_read(rofs_file_handle_t handle, uint32_t file_offset, char *buffer, uint32_t buffer_len) {
+uint32_t rofs_read(rofs_file_handle_t handle, uint32_t file_offset, uint8_t *buffer, uint32_t buffer_len) {
     uint32_t i = handle - 1;
     uint32_t file_size = fs.files[i].size;
     uint32_t file_start_offset = fs.files[i].offset;
