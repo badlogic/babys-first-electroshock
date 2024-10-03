@@ -424,7 +424,7 @@ extern "C" void app_main() {
 
 	load();
 
-	//mcugdx_sound_t *music = mcugdx_sound_load("music.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL);
+	//mcugdx_sound_t *music = mcugdx_sound_load("music.qoa", &mcugdx_rofs, MCUGDX_STREAMED, MCUGDX_MEM_EXTERNAL);
 	//mcugdx_sound_play(music, 256, 127, MCUGDX_LOOP);
 
 	escape_key = mcugdx_button_create(12, 25, MCUGDX_KEY_ESCAPE);

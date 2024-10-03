@@ -29,70 +29,70 @@ float transition_progress = 0.0f;
 bool transitioning_to_scream = false;
 
 void idle_lights(float transition_factor) {
-    float current_time = mcugdx_time();
-    float breath = (sinf(current_time * breath_speed * 2 * M_PI) + 1.0f) * 0.5f;
-    int breath_add = (int)(breath * breath_intensity);
+	float current_time = mcugdx_time();
+	float breath = (sinf(current_time * breath_speed * 2 * M_PI) + 1.0f) * 0.5f;
+	int breath_add = (int) (breath * breath_intensity);
 
-    for (int i = 0; i < NUM_LEDS; i++) {
-        float position = (float)i / NUM_LEDS;
-        float shimmer = sinf(current_time * shimmer_speed * 2 * M_PI + position * 10 + current_time * move_speed);
-        shimmer = (shimmer + 1.0f) * 0.5f;
-        int shimmer_add = (int)(shimmer * shimmer_intensity);
+	for (int i = 0; i < NUM_LEDS; i++) {
+		float position = (float) i / NUM_LEDS;
+		float shimmer = sinf(current_time * shimmer_speed * 2 * M_PI + position * 10 + current_time * move_speed);
+		shimmer = (shimmer + 1.0f) * 0.5f;
+		int shimmer_add = (int) (shimmer * shimmer_intensity);
 
-        int green = base_green + breath_add + shimmer_add;
-        if (green > 255) green = 255;
+		int green = base_green + breath_add + shimmer_add;
+		if (green > 255) green = 255;
 
-        int blue = (blue_hint > 0) ? (green * blue_hint / 255) : 0;
-        green = (int)(green * (1 - transition_factor));
-        blue = (int)(blue * (1 - transition_factor));
-        green = green < base_green ? base_green : green;
+		int blue = (blue_hint > 0) ? (green * blue_hint / 255) : 0;
+		green = (int) (green * (1 - transition_factor));
+		blue = (int) (blue * (1 - transition_factor));
+		green = green < base_green ? base_green : green;
 
-        mcugdx_neopixels_set(i, 0, green, blue);
-    }
+		mcugdx_neopixels_set(i, 0, green, blue);
+	}
 }
 
 void scream_lights(float transition_factor) {
-    float current_time = mcugdx_time();
+	float current_time = mcugdx_time();
 	if (transition_factor == 0) return;
 
-    for (int i = 0; i < NUM_LEDS; i++) {
-        float position = (float)i / NUM_LEDS;
-        float wave = sinf(current_time * scream_wave_speed * 2 * M_PI + position * 10 + current_time * scream_move_speed);
-        wave = (wave + 1.0f) * 0.5f;
+	for (int i = 0; i < NUM_LEDS; i++) {
+		float position = (float) i / NUM_LEDS;
+		float wave = sinf(current_time * scream_wave_speed * 2 * M_PI + position * 10 + current_time * scream_move_speed);
+		wave = (wave + 1.0f) * 0.5f;
 
-        int red_value = (int)(wave * (scream_max_red - scream_min_red) + scream_min_red);
-        if (red_value > 255) red_value = 255;
+		int red_value = (int) (wave * (scream_max_red - scream_min_red) + scream_min_red);
+		if (red_value > 255) red_value = 255;
 
-        red_value = (int)(red_value * transition_factor);
-        int orange_value = red_value / 6;
+		red_value = (int) (red_value * transition_factor);
+		int orange_value = red_value / 6;
 
-        mcugdx_neopixels_set(i, red_value, orange_value, 0);
-    }
+		mcugdx_neopixels_set(i, red_value, orange_value, 0);
+	}
 }
 
 void update_transition(bool is_screaming) {
-    float current_time = mcugdx_time();
-    static float last_update_time = 0;
-    float delta_time = current_time - last_update_time;
-    last_update_time = current_time;
+	float current_time = mcugdx_time();
+	static float last_update_time = 0;
+	float delta_time = current_time - last_update_time;
+	last_update_time = current_time;
 
-    if (is_screaming != transitioning_to_scream) {
-        transitioning_to_scream = is_screaming;
-    }
+	if (is_screaming != transitioning_to_scream) {
+		transitioning_to_scream = is_screaming;
+	}
 
-    if (transitioning_to_scream) {
-        transition_progress += delta_time / transition_duration;
-        if (transition_progress > 1.0f) transition_progress = 1.0f;
-    } else {
-        transition_progress -= delta_time / transition_duration;
-        if (transition_progress < 0.0f) transition_progress = 0.0f;
-    }
+	if (transitioning_to_scream) {
+		transition_progress += delta_time / transition_duration;
+		if (transition_progress > 1.0f) transition_progress = 1.0f;
+	} else {
+		transition_progress -= delta_time / transition_duration;
+		if (transition_progress < 0.0f) transition_progress = 0.0f;
+	}
 }
 
 void update_lights(bool is_screaming) {
-    update_transition(is_screaming);
-    idle_lights(transition_progress);
-    scream_lights(transition_progress);
+	update_transition(is_screaming);
+	idle_lights(transition_progress);
+	scream_lights(transition_progress);
 }
 
 extern "C" void app_main() {
@@ -106,53 +106,55 @@ extern "C" void app_main() {
 			.dout = 11};
 	mcugdx_audio_init(&audio_config);
 	mcugdx_audio_set_master_volume(255);
+    mcugdx_sound_type_t mode = MCUGDX_STREAMED;
 	mcugdx_sound_t *sounds[] = {
-            mcugdx_sound_load("scream11.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream12.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream13.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream1.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-			//mcugdx_sound_load("scream2.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream3.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream4.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream5.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream6.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream7.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream8.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream9.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-            mcugdx_sound_load("scream10.qoa", &mcugdx_rofs, MCUGDX_MEM_EXTERNAL),
-};
+			mcugdx_sound_load("scream11.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream12.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream13.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream1.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream2.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream3.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream4.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream5.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream6.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream7.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream8.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream9.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			mcugdx_sound_load("scream10.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+	};
 	size_t num_sounds = sizeof(sounds) / sizeof(sounds[0]);
+    mcugdx_mem_print();
 
 	mcugdx_ultrasonic_config_t ultrasonic_config = {
-            // PERF BOARD
+			// PERF BOARD
 			//.trigger = 2,
 			//.echo = 3};
-            .trigger = 1,
+			.trigger = 1,
 			.echo = 2,
-            .interval = ULTRASONIC_INTERVAL};
+			.interval = ULTRASONIC_INTERVAL};
 	mcugdx_ultrasonic_init(&ultrasonic_config);
 	last_ultrasonic_time = mcugdx_time();
 
 	mcugdx_neopixels_config_t neopixels_config = {
 			.num_leds = NUM_LEDS,
-            // PERF BOARD
+			// PERF BOARD
 			// .pin = 5};
-            .pin = 3};
+			.pin = 3};
 	if (!mcugdx_neopixels_init(&neopixels_config)) return;
 
-    while (true) {
-        uint32_t distance = 0;
-        if (mcugdx_ultrasonic_measure(20, &distance)) {
-            if (curr_sound == -1 && distance < 10) {
-                mcugdx_log(TAG, "Hand detected, playing sound");
-                curr_sound = mcugdx_sound_play(sounds[sound_index++], 128, 0, MCUGDX_SINGLE_SHOT);
-                if (sound_index >= num_sounds) sound_index = 0;
-            }
-            last_ultrasonic_time = mcugdx_time();
-        }
-        curr_sound = mcugdx_sound_is_playing(curr_sound) ? curr_sound : -1;
+	while (true) {
+		uint32_t distance = 0;
+		if (mcugdx_ultrasonic_measure(20, &distance)) {
+			if (curr_sound == -1 && distance < 10) {
+				mcugdx_log(TAG, "Hand detected, playing sound");
+				curr_sound = mcugdx_sound_play(sounds[sound_index++], 128, 0, MCUGDX_SINGLE_SHOT);
+				if (sound_index >= num_sounds) sound_index = 0;
+			}
+			last_ultrasonic_time = mcugdx_time();
+		}
+		curr_sound = mcugdx_sound_is_playing(curr_sound) ? curr_sound : -1;
 
-        update_lights(curr_sound != -1);
-        mcugdx_neopixels_show_max_milli_ampere(600);
-    }
+		update_lights(curr_sound != -1);
+		mcugdx_neopixels_show_max_milli_ampere(600);
+	}
 }

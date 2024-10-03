@@ -268,26 +268,7 @@ bool mcugdx_sound_is_playing(mcugdx_sound_id_t sound_instance) {
 #define FIXED_POINT_SCALE (1 << FIXED_POINT_BITS)
 #define FIXED_POINT_MASK (FIXED_POINT_SCALE - 1)
 
-int32_t fixed_sqrt(int32_t x) {
-	int32_t root = 0;
-	int32_t bit = 1 << 30;
-
-	while (bit > x)
-		bit >>= 2;
-
-	while (bit != 0) {
-		if (x >= root + bit) {
-			x -= root + bit;
-			root = (root >> 1) + bit;
-		} else {
-			root >>= 1;
-		}
-		bit >>= 2;
-	}
-	return root;
-}
-
-void calculate_pan_gains(uint8_t pan, int32_t *left_gain, int32_t *right_gain) {
+static void calculate_pan_gains(uint8_t pan, int32_t *left_gain, int32_t *right_gain) {
 	*left_gain = (255 - pan) * 256;
 	*right_gain = pan * 256;
 }
