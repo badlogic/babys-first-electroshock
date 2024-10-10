@@ -171,7 +171,7 @@ static uint32_t stream_qoa_frame(mcugdx_sound_instance_t *instance) {
 	}
 	uint32_t read_bytes = instance->sound->streamed.fs->read(sound->streamed.file, instance->file_offset + sound->streamed.first_frame_pos, decoding_buffer, sound->streamed.decoding_buffer_size);
 	instance->file_offset += read_bytes;
-	uint32_t num_samples = 0;
+	unsigned int num_samples = 0;
 	qoa_decode_frame(decoding_buffer, read_bytes, &instance->sound->streamed.qoa, (short *) instance->frames, &num_samples);
 	instance->frames_pos = 0;
 	instance->num_frames = num_samples / sound->base.channels;

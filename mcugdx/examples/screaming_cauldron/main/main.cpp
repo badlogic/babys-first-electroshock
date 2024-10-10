@@ -8,7 +8,7 @@
 mcugdx_sound_id_t curr_sound = -1;
 uint32_t sound_index = 0;
 
-#define ULTRASONIC_INTERVAL 0.05
+#define ULTRASONIC_INTERVAL 0.1
 double last_ultrasonic_time;
 
 float breath_speed = 0.2f;
@@ -106,10 +106,10 @@ extern "C" void app_main() {
 			.dout = 11};
 	mcugdx_audio_init(&audio_config);
 	mcugdx_audio_set_master_volume(255);
-    mcugdx_sound_type_t mode = MCUGDX_STREAMED;
+	mcugdx_sound_type_t mode = MCUGDX_STREAMED;
 	mcugdx_sound_t *sounds[] = {
 			mcugdx_sound_load("scream11.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream12.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
+			// mcugdx_sound_load("scream12.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
 			mcugdx_sound_load("scream13.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
 			mcugdx_sound_load("scream1.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
 			mcugdx_sound_load("scream2.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
@@ -123,7 +123,7 @@ extern "C" void app_main() {
 			mcugdx_sound_load("scream10.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
 	};
 	size_t num_sounds = sizeof(sounds) / sizeof(sounds[0]);
-    mcugdx_mem_print();
+	mcugdx_mem_print();
 
 	mcugdx_ultrasonic_config_t ultrasonic_config = {
 			// PERF BOARD
@@ -133,7 +133,6 @@ extern "C" void app_main() {
 			.echo = 2,
 			.interval = ULTRASONIC_INTERVAL};
 	mcugdx_ultrasonic_init(&ultrasonic_config);
-	last_ultrasonic_time = mcugdx_time();
 
 	mcugdx_neopixels_config_t neopixels_config = {
 			.num_leds = NUM_LEDS,
@@ -143,14 +142,13 @@ extern "C" void app_main() {
 	if (!mcugdx_neopixels_init(&neopixels_config)) return;
 
 	while (true) {
-		uint32_t distance = 0;
+		uint32_t distance;
 		if (mcugdx_ultrasonic_measure(20, &distance)) {
 			if (curr_sound == -1 && distance < 10) {
 				mcugdx_log(TAG, "Hand detected, playing sound");
 				curr_sound = mcugdx_sound_play(sounds[sound_index++], 128, 0, MCUGDX_SINGLE_SHOT);
 				if (sound_index >= num_sounds) sound_index = 0;
 			}
-			last_ultrasonic_time = mcugdx_time();
 		}
 		curr_sound = mcugdx_sound_is_playing(curr_sound) ? curr_sound : -1;
 

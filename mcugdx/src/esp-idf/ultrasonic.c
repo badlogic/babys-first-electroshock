@@ -48,6 +48,7 @@ bool mcugdx_ultrasonic_init(mcugdx_ultrasonic_config_t *config) {
 	}
 	trigger = config->trigger;
 	echo = config->echo;
+	interval = config->interval;
 	last_distance = 0;
 	last_time = 0;
 
@@ -69,7 +70,7 @@ bool mcugdx_ultrasonic_measure(uint32_t max_distance, uint32_t *distance) {
 	}
 
 	uint32_t now = mcugdx_time();
-	if (now - last_ultrasonic_time < interval) {
+	if (now - last_time < interval) {
 		*distance = last_distance;
 		return true;
 	}
