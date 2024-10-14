@@ -15,6 +15,7 @@ extern "C" {
 #include "neopixels.h"
 #include "buttons.h"
 #include "time.h"
+#include "prefs.h"
 
 void mcugdx_init(void);
 
