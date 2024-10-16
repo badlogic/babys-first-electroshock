@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Window Opener</title>
+</head>
+
+<body style="display: flex; flex-direction: column; align-items: center;">
+    <h1>Window opener</h1>
+    <span id="isClosed">Closed: </span>
+    <span id="state">State: </span>
+    <button id="toggle"></button>
+
+    <script>
+        const isClosedSpan = document.querySelector("#isClosed");
+        const stateSpan = document.querySelector("#state");
+        const toggleButton = document.querySelector("#toggle");
+        let closed = true;
+        let state = "idle";
+
+        const updateUi = () => {
+            isClosedSpan.textContent = "Closed: " + closed;
+            stateSpan.textContent = "State: " + state;
+            toggleButton.textContent = closed ? "Open" : "Close";
+        }
+
+        const fetchState = async () => {
+            try {
+                const response = await fetch("/state");
+                const data = await response.json();
+                closed = data.isClosed;
+                state = data.state;
+                updateUi();
+            } catch (error) {
+                console.error("Error fetching state:", error);
+            }
+        }
+
+        const toggleState = async () => {
+            try {
+                await fetch("/toggle");
+                state = closed ? "opening" : "closing";
+                updateUi();
+                fetchState();
+            } catch (error) {
+                console.error("Error toggling state:", error);
+            }
+        }
+
+        toggleButton.addEventListener("click", toggleState);
+        setInterval(fetchState, 500);
+        // VCC GND SCK SDA
+    </script>
+
+</body>
+
+</html>

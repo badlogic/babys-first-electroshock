@@ -2,7 +2,7 @@ if(DEFINED ESP_PLATFORM)
     idf_component_register(
         SRC_DIRS "src/common" "src/esp-idf"
         INCLUDE_DIRS "src"
-        PRIV_REQUIRES driver esp_timer esp_partition nvs_flash
+        REQUIRES driver esp_timer esp_partition nvs_flash
     )
 else()
 cmake_minimum_required(VERSION 3.16)

@@ -10,6 +10,7 @@ bool mcugdx_prefs_init(void) {
     return false;
 }
 
+
 bool mcugdx_prefs_write_int(const char *collection, const char *name, int32_t value) {
     (void)collection;
     (void)name;

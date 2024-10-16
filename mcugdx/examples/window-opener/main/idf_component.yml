@@ -1,0 +1,3 @@
+dependencies:
+  mcugdx:
+    override_path: ../../..

@@ -6,7 +6,7 @@
 #include "log.h"
 
 #define MAX_KEY_LENGTH 15
-#define TAG "MCUGDX_PREFS"
+#define TAG "mcugdx_prefs"
 
 static nvs_handle_t prefs_handle;
 
