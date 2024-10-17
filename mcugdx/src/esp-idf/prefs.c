@@ -10,7 +10,7 @@
 
 static nvs_handle_t prefs_handle;
 
-bool mcugdx_prefs_init(void) {
+bool mcugdx_prefs_init(const char *namespace) {
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ret = nvs_flash_erase();
@@ -25,7 +25,7 @@ bool mcugdx_prefs_init(void) {
         return false;
     }
 
-    ret = nvs_open("storage", NVS_READWRITE, &prefs_handle);
+    ret = nvs_open(namespace, NVS_READWRITE, &prefs_handle);
     if (ret != ESP_OK) {
         mcugdx_loge(TAG, "Failed to open NVS handle: %s", esp_err_to_name(ret));
         return false;
@@ -33,11 +33,8 @@ bool mcugdx_prefs_init(void) {
     return true;
 }
 
-bool mcugdx_prefs_write_int(const char *collection, const char *name, int32_t value) {
-    char key[MAX_KEY_LENGTH + 1];
-    snprintf(key, sizeof(key), "%s.%s", collection, name);
-
-    esp_err_t ret = nvs_set_i32(prefs_handle, key, value);
+bool mcugdx_prefs_write_int(const char *name, int32_t value) {
+    esp_err_t ret = nvs_set_i32(prefs_handle, name, value);
     if (ret != ESP_OK) {
         mcugdx_loge(TAG, "Failed to set int value: %s", esp_err_to_name(ret));
         return false;
@@ -51,11 +48,8 @@ bool mcugdx_prefs_write_int(const char *collection, const char *name, int32_t va
     return true;
 }
 
-bool mcugdx_prefs_write_string(const char *collection, const char *name, const char *value) {
-    char key[MAX_KEY_LENGTH + 1];
-    snprintf(key, sizeof(key), "%s.%s", collection, name);
-
-    esp_err_t ret = nvs_set_str(prefs_handle, key, value);
+bool mcugdx_prefs_write_string(const char *name, const char *value) {
+    esp_err_t ret = nvs_set_str(prefs_handle, name, value);
     if (ret != ESP_OK) {
         mcugdx_loge(TAG, "Failed to set string value: %s", esp_err_to_name(ret));
         return false;
@@ -69,11 +63,8 @@ bool mcugdx_prefs_write_string(const char *collection, const char *name, const c
     return true;
 }
 
-bool mcugdx_prefs_read_int(const char *collection, const char *name, int32_t *value) {
-    char key[MAX_KEY_LENGTH + 1];
-    snprintf(key, sizeof(key), "%s.%s", collection, name);
-
-    esp_err_t ret = nvs_get_i32(prefs_handle, key, value);
+bool mcugdx_prefs_read_int(const char *name, int32_t *value) {
+    esp_err_t ret = nvs_get_i32(prefs_handle, name, value);
     if (ret != ESP_OK) {
         mcugdx_loge(TAG, "Failed to read int value: %s", esp_err_to_name(ret));
         return false;
@@ -81,12 +72,9 @@ bool mcugdx_prefs_read_int(const char *collection, const char *name, int32_t *va
     return true;
 }
 
-char* mcugdx_prefs_read_string(const char *collection, const char *name) {
-    char key[MAX_KEY_LENGTH + 1];
-    snprintf(key, sizeof(key), "%s.%s", collection, name);
-
+char* mcugdx_prefs_read_string(const char *name) {
     size_t required_size;
-    esp_err_t ret = nvs_get_str(prefs_handle, key, NULL, &required_size);
+    esp_err_t ret = nvs_get_str(prefs_handle, name, NULL, &required_size);
     if (ret != ESP_OK) {
         mcugdx_loge(TAG, "Failed to get string size: %s", esp_err_to_name(ret));
         return NULL;
@@ -98,7 +86,7 @@ char* mcugdx_prefs_read_string(const char *collection, const char *name) {
         return NULL;
     }
 
-    ret = nvs_get_str(prefs_handle, key, value, &required_size);
+    ret = nvs_get_str(prefs_handle, name, value, &required_size);
     if (ret != ESP_OK) {
         mcugdx_loge(TAG, "Failed to read string value: %s", esp_err_to_name(ret));
         mcugdx_mem_free(value);

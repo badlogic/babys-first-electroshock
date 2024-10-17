@@ -185,12 +185,12 @@ bool bme280_init(int sclk, int sda) {
 }
 
 bool bme280_update() {
-	mcugdx_mutex_lock(&mutex);
+	mcugdx_mutex_lock_l(&mutex, __FILE__, __LINE__);
 	uint8_t data[8];
 	esp_err_t ret = bme280_read_registers(BME280_REGISTER_PRESSUREDATA, data, 8);
 	if (ret != ESP_OK) {
 		mcugdx_loge(TAG, "Failed to read sensor data");
-		mcugdx_mutex_unlock(&mutex);
+		mcugdx_mutex_unlock_l(&mutex, __FILE__, __LINE__);
 		return false;
 	}
 	int32_t adc_T = (data[3] << 12) | (data[4] << 4) | (data[5] >> 4);
@@ -230,27 +230,27 @@ bool bme280_update() {
 	v_x1_u32r = (v_x1_u32r > 419430400) ? 419430400 : v_x1_u32r;
 	humidity = (float) (v_x1_u32r >> 12) / 1024.0f;
 
-	mcugdx_mutex_unlock(&mutex);
+	mcugdx_mutex_unlock_l(&mutex, __FILE__, __LINE__);
 	return true;
 }
 
 float bme280_temperature() {
-	mcugdx_mutex_lock(&mutex);
+	mcugdx_mutex_lock_l(&mutex, __FILE__, __LINE__);
 	float value = temperature;
-	mcugdx_mutex_unlock(&mutex);
+	mcugdx_mutex_unlock_l(&mutex, __FILE__, __LINE__);
 	return value;
 }
 
 float bme280_pressure() {
-	mcugdx_mutex_lock(&mutex);
+	mcugdx_mutex_lock_l(&mutex, __FILE__, __LINE__);
 	float value = pressure;
-	mcugdx_mutex_unlock(&mutex);
+	mcugdx_mutex_unlock_l(&mutex, __FILE__, __LINE__);
 	return value;
 }
 
 float bme280_humidity() {
-	mcugdx_mutex_lock(&mutex);
+	mcugdx_mutex_lock_l(&mutex, __FILE__, __LINE__);
 	float value = humidity;
-	mcugdx_mutex_unlock(&mutex);
+	mcugdx_mutex_unlock_l(&mutex, __FILE__, __LINE__);
 	return value;
 }

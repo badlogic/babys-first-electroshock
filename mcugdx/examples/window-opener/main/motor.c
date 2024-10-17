@@ -40,7 +40,7 @@ void motor_print(void) {
 }
 
 void motor_update(void) {
-    mcugdx_mutex_lock(&motor.mutex);
+    mcugdx_mutex_lock_l(&motor.mutex, __FILE__, __LINE__);
 	switch (motor.state) {
 		case MOTOR_CLOSING:
 			gpio_set_level(MOTOR_CLOSE_PIN, 1);
@@ -61,11 +61,11 @@ void motor_update(void) {
 		motor.state = MOTOR_IDLE;
 		motor_print();
 	}
-    mcugdx_mutex_unlock(&motor.mutex);
+    mcugdx_mutex_unlock_l(&motor.mutex, __FILE__, __LINE__);
 }
 
 void motor_toggle(void) {
-    mcugdx_mutex_lock(&motor.mutex);
+    mcugdx_mutex_lock_l(&motor.mutex, __FILE__, __LINE__);
 	if (motor.is_closed) {
 		motor.state = MOTOR_OPENING;
 		motor.is_closed = false;
@@ -75,19 +75,19 @@ void motor_toggle(void) {
 	}
 	motor.on_start_time = mcugdx_time();
     motor_print();
-    mcugdx_mutex_unlock(&motor.mutex);
+    mcugdx_mutex_unlock_l(&motor.mutex, __FILE__, __LINE__);
 }
 
 bool motor_is_closed(void) {
-    mcugdx_mutex_lock(&motor.mutex);
+    mcugdx_mutex_lock_l(&motor.mutex, __FILE__, __LINE__);
     bool result = motor.is_closed;
-    mcugdx_mutex_unlock(&motor.mutex);
+    mcugdx_mutex_unlock_l(&motor.mutex, __FILE__, __LINE__);
     return result;
 }
 
 motor_state_t motor_state(void) {
-    mcugdx_mutex_lock(&motor.mutex);
+    mcugdx_mutex_lock_l(&motor.mutex, __FILE__, __LINE__);
     motor_state_t result = motor.state;
-    mcugdx_mutex_unlock(&motor.mutex);
+    mcugdx_mutex_unlock_l(&motor.mutex, __FILE__, __LINE__);
     return result;
 }

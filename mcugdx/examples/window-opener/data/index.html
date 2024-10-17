@@ -1,59 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Window Opener</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f4f8;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input, button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s, opacity 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #3498db;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .readings {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .temperature {
+            font-size: 3em;
+            font-weight: bold;
+        }
+        .secondary-readings {
+            font-size: 1.2em;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+        .status {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+        .temp-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .temp-control label {
+            flex: 1;
+        }
+        .temp-control input {
+            flex: 2;
+            margin-left: 10px;
+        }
+        .checkbox-control {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .checkbox-control input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+    </style>
 </head>
+<body>
+    <h1 style="text-align: center;">Window Opener</h1>
 
-<body style="display: flex; flex-direction: column; align-items: center;">
-    <h1>Window opener</h1>
-    <span id="isClosed">Closed: </span>
-    <span id="state">State: </span>
-    <button id="toggle"></button>
+    <div class="section">
+        <div class="readings">
+            <span class="temperature" id="temperature">--°C</span>
+            <div class="secondary-readings">
+                <span id="pressure">-- hPa</span> |
+                <span id="humidity">--%</span>
+            </div>
+            <div class="status">
+                <span id="isClosed">Closed: --</span> |
+                <span id="state">State: --</span>
+            </div>
+        </div>
+        <button id="toggle">Open/Close Window</button>
+    </div>
+
+    <div class="section">
+        <h2>Temperature Control</h2>
+        <div class="checkbox-control">
+            <input type="checkbox" id="manualControl">
+            <label for="manualControl">Manual Control</label>
+        </div>
+        <div class="temp-control">
+            <label for="minTemp">Min Temperature:</label>
+            <input type="number" id="minTemp" min="-10" max="40" step="1">
+        </div>
+        <div class="temp-control">
+            <label for="maxTemp">Max Temperature:</label>
+            <input type="number" id="maxTemp" min="-10" max="40" step="1">
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Network Configuration</h2>
+        <input type="text" id="deviceName" placeholder="Device Name">
+        <input type="text" id="ssid" placeholder="WiFi SSID">
+        <input type="password" id="password" placeholder="WiFi Password">
+        <button id="saveConfig">Save & Restart</button>
+    </div>
 
     <script>
-        const isClosedSpan = document.querySelector("#isClosed");
-        const stateSpan = document.querySelector("#state");
-        const toggleButton = document.querySelector("#toggle");
-        let closed = true;
-        let state = "idle";
+        const temperatureSpan = document.getElementById("temperature");
+        const pressureSpan = document.getElementById("pressure");
+        const humiditySpan = document.getElementById("humidity");
+        const isClosedSpan = document.getElementById("isClosed");
+        const stateSpan = document.getElementById("state");
+        const toggleButton = document.getElementById("toggle");
+        const saveConfigButton = document.getElementById("saveConfig");
+        const minTempInput = document.getElementById("minTemp");
+        const maxTempInput = document.getElementById("maxTemp");
+        const deviceNameInput = document.getElementById("deviceName");
+        const ssidInput = document.getElementById("ssid");
+        const passwordInput = document.getElementById("password");
+        const manualControlCheckbox = document.getElementById("manualControl");
 
-        const updateUi = () => {
-            isClosedSpan.textContent = "Closed: " + closed;
-            stateSpan.textContent = "State: " + state;
-            toggleButton.textContent = closed ? "Open" : "Close";
+        const updateUi = (data) => {
+            temperatureSpan.textContent = data.temperature.toFixed(1) + "°C";
+            pressureSpan.textContent = data.pressure.toFixed(0) + " hPa";
+            humiditySpan.textContent = data.humidity.toFixed(0) + "%";
+            isClosedSpan.textContent = "Window: " + (data.isClosed ? "closed" : "open");
+            stateSpan.textContent = "Motor: " + data.state;
+            toggleButton.textContent = data.isClosed ? "Open Window" : "Close Window";
+            manualControlCheckbox.checked = data.manual;
+            toggleButton.disabled = !data.manual;
         }
 
         const fetchState = async () => {
             try {
                 const response = await fetch("/state");
                 const data = await response.json();
-                closed = data.isClosed;
-                state = data.state;
-                updateUi();
+                updateUi(data);
             } catch (error) {
                 console.error("Error fetching state:", error);
             }
         }
 
-        const toggleState = async () => {
+        const fetchConfig = async () => {
             try {
-                await fetch("/toggle");
-                state = closed ? "opening" : "closing";
-                updateUi();
+                const response = await fetch("/config");
+                const config = await response.json();
+                deviceNameInput.value = config.deviceName ?? "";
+                ssidInput.value = config.ssid ?? "";
+                passwordInput.value = config.password ?? "";
+                minTempInput.value = config.minTemp;
+                maxTempInput.value = config.maxTemp;
+                manualControlCheckbox.checked = config.manual;
+                toggleButton.disabled = !config.manual;
+            } catch (error) {
+                console.error("Error fetching config:", error);
+            }
+        }
+
+        const toggleState = async () => {
+            if (!manualControlCheckbox.checked) return;
+            try {
+                await fetch("/toggle", { method: "POST" });
                 fetchState();
             } catch (error) {
                 console.error("Error toggling state:", error);
             }
         }
 
+        const saveConfig = async () => {
+            const config = {
+                deviceName: deviceNameInput.value,
+                ssid: ssidInput.value,
+                password: passwordInput.value
+            };
+
+            try {
+                const response = await fetch("/config", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(config)
+                });
+                if (response.ok) {
+                    alert("Configuration saved successfully. Device will restart.");
+                } else {
+                    alert("Failed to save configuration");
+                }
+            } catch (error) {
+                console.error("Error saving config:", error);
+                alert("Error saving configuration");
+            }
+        }
+
+        const updateTemp = async (type, value) => {
+            try {
+                await fetch(`/${type}_temp?value=${value}`, { method: "POST" });
+            } catch (error) {
+                console.error(`Error updating ${type} temperature:`, error);
+            }
+        }
+
+        const updateManualControl = async (value) => {
+            try {
+                await fetch(`/manual?value=${value ? 1 : 0}`, { method: "POST" });
+                toggleButton.disabled = !value;
+            } catch (error) {
+                console.error("Error updating manual control:", error);
+            }
+        }
+
         toggleButton.addEventListener("click", toggleState);
+        saveConfigButton.addEventListener("click", saveConfig);
+        minTempInput.addEventListener("change", (e) => updateTemp("min", e.target.value));
+        maxTempInput.addEventListener("change", (e) => updateTemp("max", e.target.value));
+        manualControlCheckbox.addEventListener("change", (e) => updateManualControl(e.target.checked));
+
+        // Initial fetches
+        fetchState();
+        fetchConfig();
         setInterval(fetchState, 500);
-        // VCC GND SCK SDA
     </script>
-
 </body>
-
 </html>

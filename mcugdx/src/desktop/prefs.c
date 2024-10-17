@@ -5,38 +5,34 @@
 
 #define TAG "mcugdx_prefs"
 
-bool mcugdx_prefs_init(void) {
+bool mcugdx_prefs_init(const char *collection) {
     mcugdx_loge(TAG, "not implemented");
     return false;
 }
 
 
-bool mcugdx_prefs_write_int(const char *collection, const char *name, int32_t value) {
-    (void)collection;
+bool mcugdx_prefs_write_int(const char *name, int32_t value) {
     (void)name;
     (void)value;
     mcugdx_loge(TAG, "not implemented");
     return false;
 }
 
-bool mcugdx_prefs_write_string(const char *collection, const char *name, const char *value) {
-    (void)collection;
+bool mcugdx_prefs_write_string(const char *name, const char *value) {
     (void)name;
     (void)value;
     mcugdx_loge(TAG, "not implemented");
     return false;
 }
 
-bool mcugdx_prefs_read_int(const char *collection, const char *name, int32_t *value) {
-    (void)collection;
+bool mcugdx_prefs_read_int(const char *name, int32_t *value) {
     (void)name;
     (void)value;
     mcugdx_loge(TAG, "not implemented");
     return false;
 }
 
-char* mcugdx_prefs_read_string(const char *collection, const char *name) {
-    (void)collection;
+char* mcugdx_prefs_read_string(const char *name) {
     (void)name;
     mcugdx_loge(TAG, "not implemented");
     return NULL;

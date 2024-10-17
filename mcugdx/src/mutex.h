@@ -23,7 +23,9 @@ typedef SemaphoreHandle_t mcugdx_mutex_t;
 
 bool mcugdx_mutex_init(mcugdx_mutex_t *mutex);
 void mcugdx_mutex_lock(mcugdx_mutex_t *mutex);
+void mcugdx_mutex_lock_l(mcugdx_mutex_t *mutex, const char* file, int line);
 void mcugdx_mutex_unlock(mcugdx_mutex_t *mutex);
+void mcugdx_mutex_unlock_l(mcugdx_mutex_t *mutex, const char *file, int line);
 void mcugdx_mutex_destroy(mcugdx_mutex_t *mutex);
 
 #ifdef __cplusplus
