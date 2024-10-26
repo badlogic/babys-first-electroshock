@@ -18,10 +18,12 @@
 #include "motor.h"
 #include "bme280.h"
 #include "config.h"
+#include "neopixels.h"
 #include "cJSON.h"
 
 #define TAG "server"
 
+#define LED_BRIGHTNESS 64
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 
@@ -68,6 +70,8 @@ void start_ap_mode(void) {
 	mcugdx_log(TAG, "AP Netmask: " IPSTR, IP2STR(&ip_info.netmask));
 	mcugdx_log(TAG, "AP Gateway: " IPSTR, IP2STR(&ip_info.gw));
 	mcugdx_log(TAG, "Server should be accessible at http://" IPSTR, IP2STR(&ip_info.ip));
+	mcugdx_neopixels_set(0, LED_BRIGHTNESS, 0, 0);
+	mcugdx_neopixels_show();
 }
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
@@ -363,6 +367,8 @@ void webserver_init(void) {
 
 			if (bits & WIFI_CONNECTED_BIT) {
 				mcugdx_log(TAG, "Connected to WiFi");
+				mcugdx_neopixels_set(0, 0, LED_BRIGHTNESS, 0);
+				mcugdx_neopixels_show();
 			} else {
 				mcugdx_log(TAG, "Failed to connect to WiFi, starting AP mode");
 				ESP_ERROR_CHECK(esp_wifi_stop());
