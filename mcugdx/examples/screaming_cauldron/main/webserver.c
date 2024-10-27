@@ -192,12 +192,16 @@ static esp_err_t volume_handler(httpd_req_t *req) {
 	return ESP_OK;
 }
 
+extern bool updating_audio;
+
 esp_err_t audio_handler(httpd_req_t *req) {
     const esp_partition_t *partition = esp_partition_find_first(
         ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "rofs");
     if (partition == NULL) {
         return ESP_FAIL;
     }
+
+	updating_audio = true;
 
     uint8_t buffer[512];
     int received;
@@ -208,12 +212,14 @@ esp_err_t audio_handler(httpd_req_t *req) {
     while ((received = httpd_req_recv(req, (char *)buffer, sizeof(buffer))) > 0) {
         if (esp_partition_write(partition, offset, buffer, received) != ESP_OK) {
 			mcugdx_loge(TAG, "Failed to write audio data");
+			updating_audio = false;
             return ESP_FAIL;
         }
         offset += received;
 		mcugdx_log(TAG, "Wrote %li bytes to rofs", offset);
     }
 
+	httpd_resp_sendstr(req, "OK");
 	mcugdx_log(TAG, "Saved Wifi config, restarting");
 	esp_restart();
 

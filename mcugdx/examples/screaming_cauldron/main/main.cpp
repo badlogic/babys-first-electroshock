@@ -27,6 +27,7 @@ float led_offsets[NUM_LEDS];
 LED led_buffer[NUM_LEDS];
 bool current_is_screaming = false;
 float transition_factor = 0.0f;
+bool updating_audio = false;
 
 void cauldron_set_color(int r, int g, int b) {
 	config_t *config = config_lock();
@@ -233,6 +234,15 @@ extern "C" void app_main() {
 	int32_t r, g, b;
 
 	while (true) {
+		if (updating_audio) {
+			int i = 0;
+			while (true) {
+				set_lights(0, i++ % 2 == 0 ? 255: 0, 0);
+				mcugdx_neopixels_show_max_milli_ampere(500);
+				mcugdx_sleep(500);
+			}
+		}
+
 		if (!is_config_mode) {
 			uint32_t distance;
 			if (mcugdx_ultrasonic_measure(20, &distance)) {
