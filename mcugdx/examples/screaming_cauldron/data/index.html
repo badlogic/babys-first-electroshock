@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Config</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f4f8;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input[type="text"], input[type="password"], input[type="file"], button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        button {
+            width: 100%;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s, opacity 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .color-picker {
+            position: relative;
+            width: 100%;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            cursor: crosshair;
+        }
+        #selectedColor {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Device Config</h1>
+
+    <div class="section">
+        <h2>Network Configuration</h2>
+        <input type="text" id="deviceName" placeholder="Device Name">
+        <input type="text" id="ssid" placeholder="WiFi SSID">
+        <input type="password" id="password" placeholder="WiFi Password">
+        <button id="saveConfig">Save & Restart</button>
+    </div>
+
+    <div class="section">
+        <h2>RGB Control</h2>
+        <canvas class="color-picker" id="colorPickerCanvas"></canvas>
+        <div id="selectedColor">Selected Color: rgb(255, 255, 255)</div>
+        <label for="brightness">Brightness:</label>
+        <input type="range" id="brightness" min="0" max="255">
+    </div>
+
+    <div class="section">
+        <h2>Volume Control</h2>
+        <label for="volume">Volume:</label>
+        <input type="range" id="volume" min="0" max="255">
+    </div>
+
+    <div class="section">
+        <h2>Update Audio Files</h2>
+        <input type="file" id="audioFile" accept="*">
+        <button id="updateAudioFiles">Update Audio Files</button>
+    </div>
+
+    <script>
+        const deviceNameInput = document.getElementById("deviceName");
+        const ssidInput = document.getElementById("ssid");
+        const passwordInput = document.getElementById("password");
+        const saveConfigButton = document.getElementById("saveConfig");
+
+        const volumeInput = document.getElementById("volume");
+        const brightnessInput = document.getElementById("brightness");
+        const selectedColorDiv = document.getElementById("selectedColor");
+        const colorPickerCanvas = document.getElementById("colorPickerCanvas");
+        const ctx = colorPickerCanvas.getContext("2d");
+
+        const audioFileInput = document.getElementById("audioFile");
+        const updateAudioFilesButton = document.getElementById("updateAudioFiles");
+
+        let selectedX = -1;
+        let selectedY = -1;
+
+        const fetchConfig = async () => {
+            try {
+                const response = await fetch("/config");
+                const config = await response.json();
+                deviceNameInput.value = config.deviceName ?? "";
+                ssidInput.value = config.ssid ?? "";
+                passwordInput.value = config.password ?? "";
+                volumeInput.value = config.volume ?? 0;
+                brightnessInput.value = config.brightness ?? 0;
+
+                // Set the initial selected color marker based on fetched color values
+                if (config.r !== undefined && config.g !== undefined && config.b !== undefined) {
+                    const color = { r: config.r, g: config.g, b: config.b };
+                    updateSelectedColor(color);
+                    const coords = findClosestColorCoordinates(color.r, color.g, color.b);
+                    if (coords) {
+                        selectedX = coords.x;
+                        selectedY = coords.y;
+                    }
+                }
+                renderColorPicker();
+            } catch (error) {
+                console.error("Error fetching config:", error);
+            }
+        };
+
+        const saveConfig = async () => {
+            const config = {
+                deviceName: deviceNameInput.value,
+                ssid: ssidInput.value,
+                password: passwordInput.value,
+                volume: volumeInput.value,
+                brightness: brightnessInput.value,
+                r: parseInt(selectedColorDiv.style.backgroundColor.slice(4, -1).split(",")[0]),
+                g: parseInt(selectedColorDiv.style.backgroundColor.slice(4, -1).split(",")[1]),
+                b: parseInt(selectedColorDiv.style.backgroundColor.slice(4, -1).split(",")[2])
+            };
+
+            try {
+                const response = await fetch("/config", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(config)
+                });
+                if (response.ok) {
+                    alert("Configuration saved successfully. Device will restart.");
+                } else {
+                    alert("Failed to save configuration");
+                }
+            } catch (error) {
+                console.error("Error saving config:", error);
+                alert("Error saving configuration");
+            }
+        };
+
+        const updateRGB = async (r, g, b, brightness) => {
+            try {
+                await fetch(`/rgb?r=${r}&g=${g}&b=${b}&br=${brightness}`, { method: "POST" });
+            } catch (error) {
+                console.error("Error updating RGB:", error);
+            }
+        };
+
+        const updateVolume = async () => {
+            try {
+                await fetch(`/volume?value=${volumeInput.value}`, { method: "POST" });
+            } catch (error) {
+                console.error("Error updating volume:", error);
+            }
+        };
+
+        const updateAudioFiles = async () => {
+            const file = audioFileInput.files[0];
+            if (!file) {
+                alert("Please select an audio file to upload.");
+                return;
+            }
+
+            try {
+                const response = await fetch("/audio", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/octet-stream" },
+                    body: await file.arrayBuffer()
+                });
+
+                if (response.ok) {
+                    alert("Audio file uploaded successfully.");
+                } else {
+                    alert("Failed to upload audio file.");
+                }
+            } catch (error) {
+                console.error("Error uploading audio file:", error);
+                alert("Error uploading audio file");
+            }
+        };
+
+        saveConfigButton.addEventListener("click", saveConfig);
+        volumeInput.addEventListener("input", updateVolume);
+        updateAudioFilesButton.addEventListener("click", updateAudioFiles);
+
+        const renderColorPicker = () => {
+            // Set canvas dimensions based on the client size and device pixel ratio
+            const scale = window.devicePixelRatio;
+            colorPickerCanvas.width = colorPickerCanvas.clientWidth * scale;
+            colorPickerCanvas.height = colorPickerCanvas.clientHeight * scale;
+            ctx.scale(scale, scale);
+
+            const midY = colorPickerCanvas.clientHeight / 2;
+            ctx.clearRect(0, 0, colorPickerCanvas.clientWidth, colorPickerCanvas.clientHeight);
+
+            const gradient = ctx.createLinearGradient(0, midY, colorPickerCanvas.clientWidth, midY);
+            gradient.addColorStop(0, "red");
+            gradient.addColorStop(0.12, "orange");
+            gradient.addColorStop(0.17, "yellow");
+            gradient.addColorStop(0.25, "lime");
+            gradient.addColorStop(0.33, "green");
+            gradient.addColorStop(0.41, "turquoise");
+            gradient.addColorStop(0.5, "cyan");
+            gradient.addColorStop(0.58, "skyblue");
+            gradient.addColorStop(0.67, "blue");
+            gradient.addColorStop(0.75, "indigo");
+            gradient.addColorStop(0.83, "magenta");
+            gradient.addColorStop(0.92, "pink");
+            gradient.addColorStop(1, "white");
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, colorPickerCanvas.clientWidth, colorPickerCanvas.clientHeight);
+
+            // Draw selected pixel indicator
+            if (selectedX !== -1 && selectedY !== -1) {
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(selectedX, midY, 5, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+        };
+
+        const getColorFromPicker = (x, y) => {
+            // Adjust for high DPI displays by using the scaled canvas dimensions
+            const scale = window.devicePixelRatio;
+            const adjustedX = Math.floor(x * scale);
+            const adjustedY = Math.floor((colorPickerCanvas.clientHeight / 2) * scale);
+            const imageData = ctx.getImageData(adjustedX, adjustedY, 1, 1).data;
+            return { r: imageData[0], g: imageData[1], b: imageData[2] };
+        };
+
+        const findClosestColorCoordinates = (r, g, b) => {
+            // Search for the closest color match in the middle band of the canvas
+            const scale = window.devicePixelRatio;
+            const midY = Math.floor(colorPickerCanvas.clientHeight / 2);
+            let closestDistance = Infinity;
+            let closestCoords = null;
+            for (let x = 0; x < colorPickerCanvas.clientWidth; x++) {
+                const adjustedX = Math.floor(x * scale);
+                const adjustedY = Math.floor(midY * scale);
+                const imageData = ctx.getImageData(adjustedX, adjustedY, 1, 1).data;
+                const distance = Math.sqrt(
+                    Math.pow(imageData[0] - r, 2) +
+                    Math.pow(imageData[1] - g, 2) +
+                    Math.pow(imageData[2] - b, 2)
+                );
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestCoords = { x, y: midY };
+                }
+            }
+            return closestCoords;
+        };
+
+        const updateSelectedColor = (color) => {
+            selectedColorDiv.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+            selectedColorDiv.style.color = (color.r + color.g + color.b) / 3 > 128 ? "black" : "white";
+            selectedColorDiv.textContent = `Selected Color: rgb(${color.r}, ${color.g}, ${color.b})`;
+        };
+
+        const handleColorPick = (e) => {
+            const rect = colorPickerCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            selectedX = x;
+            selectedY = Math.floor(colorPickerCanvas.clientHeight / 2);
+            const color = getColorFromPicker(x, selectedY);
+            const brightness = brightnessInput.value;
+            updateRGB(color.r, color.g, color.b, brightness);
+            updateSelectedColor(color);
+            renderColorPicker();
+        };
+
+        colorPickerCanvas.addEventListener("mousedown", (e) => {
+            handleColorPick(e);
+            colorPickerCanvas.addEventListener("mousemove", handleColorPick);
+        });
+
+        colorPickerCanvas.addEventListener("mouseup", () => {
+            colorPickerCanvas.removeEventListener("mousemove", handleColorPick);
+        });
+
+        brightnessInput.addEventListener("input", () => {
+            const color = getColorFromPicker(selectedX !== -1 ? selectedX : colorPickerCanvas.clientWidth / 2, selectedY !== -1 ? selectedY : colorPickerCanvas.clientHeight / 2);
+            updateRGB(color.r, color.g, color.b, brightnessInput.value);
+            updateSelectedColor(color);
+        });
+
+        renderColorPicker();
+        fetchConfig();
+    </script>
+</body>
+</html>

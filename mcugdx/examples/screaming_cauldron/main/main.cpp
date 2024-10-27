@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "config.h"
+#include "webserver.h"
 
 #ifdef ESP_PLATFORM
 #include "driver/adc.h"
@@ -21,11 +23,27 @@ typedef struct {
 	int32_t r, g, b;
 } LED;
 
-LED idle_led = {0, 255, 0};
 float led_offsets[NUM_LEDS];
 LED led_buffer[NUM_LEDS];
 bool current_is_screaming = false;
 float transition_factor = 0.0f;
+
+void cauldron_set_color(int r, int g, int b) {
+	config_t *config = config_lock();
+	config->r = r;
+	config->g = g;
+	config->b = b;
+	config_unlock();
+	config_save();
+}
+
+void cauldron_set_volume(int volume) {
+	config_t *config = config_lock();
+	config->volume = volume;
+	mcugdx_audio_set_master_volume(volume);
+	config_unlock();
+	config_save();
+}
 
 void initialize_led_offsets() {
 	for (int i = 0; i < NUM_LEDS; i++) {
@@ -44,15 +62,22 @@ void mix_color(int led_index, int r, int g, int b, float intensity) {
 }
 
 void apply_buffer() {
+	config_t *config = config_lock();
+	float brightness = config->brightness / 255.0f;
+	config_unlock();
 	for (int i = 0; i < NUM_LEDS; i++) {
-		int r = led_buffer[i].r > 255 ? 255 : led_buffer[i].r;
-		int g = led_buffer[i].g > 255 ? 255 : led_buffer[i].g;
-		int b = led_buffer[i].b > 255 ? 255 : led_buffer[i].b;
-		mcugdx_neopixels_set(i, r, g, b);
+		float r = (led_buffer[i].r > 255 ? 255 : led_buffer[i].r) * brightness;
+		float g = (led_buffer[i].g > 255 ? 255 : led_buffer[i].g) * brightness;
+		float b = (led_buffer[i].b > 255 ? 255 : led_buffer[i].b) * brightness;
+		mcugdx_neopixels_set(i, (int)r, (int)g, (int)b);
 	}
 }
 
 void idle_lights(float factor) {
+	config_t *config = config_lock();
+	int r = config->r, g = config->g, b = config->b;
+	config_unlock();
+
 	float current_time = mcugdx_time();
 	float breath_speed = 1.5f;
 	float min_brightness = 0.2f;
@@ -62,7 +87,7 @@ void idle_lights(float factor) {
 		float breath = (sinf(current_time * breath_speed + led_offsets[i]) + 1.0f) * 0.5f;
 		float brightness = (min_brightness + breath * brightness_range) * factor;
 
-		mix_color(i, idle_led.r, idle_led.g, idle_led.b, brightness);
+		mix_color(i, r, g, b, brightness);
 	}
 }
 
@@ -163,6 +188,7 @@ void adc_to_color(int value, int32_t &r, int32_t &g, int32_t &b) {
 extern "C" void app_main() {
 	mcugdx_init();
 	mcugdx_rofs_init();
+	config_read();
 
 	mcugdx_audio_config_t audio_config = {
 			.sample_rate = 22050,
@@ -171,30 +197,21 @@ extern "C" void app_main() {
 			.ws = 13,
 			.dout = 11};
 	mcugdx_audio_init(&audio_config);
-	mcugdx_audio_set_master_volume(255);
-	mcugdx_sound_type_t mode = MCUGDX_STREAMED;
-	mcugdx_sound_t *sounds[] = {
-			mcugdx_sound_load("scream11.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream12.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream13.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream1.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream2.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream3.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream4.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream5.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream6.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream7.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream8.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream9.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-			mcugdx_sound_load("scream10.qoa", &mcugdx_rofs, mode, MCUGDX_MEM_EXTERNAL),
-	};
-	size_t num_sounds = sizeof(sounds) / sizeof(sounds[0]);
+	mcugdx_audio_set_master_volume(config.volume);
+
+	mcugdx_sound_t *sounds[100];
+	size_t num_sounds = 0;
+	for (int i = 0; i < mcugdx_rofs.num_files(); i++) {
+		const char *file_name = mcugdx_rofs.file_name(i);
+		if (strlen(file_name) >= 4 && strcmp(file_name + strlen(file_name) - 4, ".qoa") == 0) {
+			sounds[num_sounds++] = mcugdx_sound_load(file_name, &mcugdx_rofs, MCUGDX_STREAMED, MCUGDX_MEM_EXTERNAL);
+			mcugdx_log(TAG, "Loaded sound %s", file_name);
+		}
+	}
+	mcugdx_log(TAG, "Loaded %li sounds", num_sounds);
 	mcugdx_mem_print();
 
 	mcugdx_ultrasonic_config_t ultrasonic_config = {
-			// PERF BOARD
-			//.trigger = 2,
-			//.echo = 3};
 			.trigger = 1,
 			.echo = 2,
 			.interval = ULTRASONIC_INTERVAL};
@@ -202,28 +219,18 @@ extern "C" void app_main() {
 
 	mcugdx_neopixels_config_t neopixels_config = {
 			.num_leds = NUM_LEDS,
-			// PERF BOARD
-			// .pin = 5};
 			.pin = 3};
 	if (!mcugdx_neopixels_init(&neopixels_config)) return;
 	initialize_led_offsets();
 
-
-	mcugdx_prefs_init("cauldron");
-	if (!mcugdx_prefs_read_int("r", &idle_led.r)) {
-		mcugdx_prefs_write_int("r", 0);
-		mcugdx_prefs_write_int("g", 0);
-		mcugdx_prefs_write_int("b", 0);
-	}
-	mcugdx_prefs_read_int("g", &idle_led.g);
-	mcugdx_prefs_read_int("b", &idle_led.b);
 	mcugdx_button_create(5, 25, MCUGDX_KEY_SPACE);
-#ifdef ESP_PLATFORM
 	adc1_config_width(ADC_WIDTH_BIT_12);
-	adc1_config_channel_atten(ADC1_CHANNEL_3, ADC_ATTEN_DB_11);
-#endif
+	adc1_config_channel_atten(ADC1_CHANNEL_3, ADC_ATTEN_DB_12);
+
+	webserver_init();
 
 	bool is_config_mode = false;
+	int32_t r, g, b;
 
 	while (true) {
 		if (!is_config_mode) {
@@ -254,16 +261,13 @@ extern "C" void app_main() {
 				if (event.type == MCUGDX_BUTTON_PRESSED) {
 					mcugdx_log(TAG, "Config button pressed");
 					is_config_mode = false;
-					mcugdx_prefs_write_int("r", idle_led.r);
-					mcugdx_prefs_write_int("g", idle_led.g);
-					mcugdx_prefs_write_int("b", idle_led.b);
+					cauldron_set_color(r, g, b);
 				}
 			}
 
-#ifdef ESP_PLATFORM
-			adc_to_color(adc1_get_raw(ADC1_CHANNEL_3), idle_led.r, idle_led.g, idle_led.b);
-#endif
-			set_lights(idle_led.r, idle_led.g, idle_led.b);
+			adc_to_color(adc1_get_raw(ADC1_CHANNEL_3), r, g, b);
+
+			set_lights(r, g, b);
 			mcugdx_neopixels_show_max_milli_ampere(600);
 		}
 
