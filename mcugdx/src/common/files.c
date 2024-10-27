@@ -17,4 +17,6 @@ mcugdx_file_system_t mcugdx_rofs = {
 	.close = rofs_close,
 	.read = rofs_read,
 	.read_fully = rofs_read_fully,
+	.num_files = rofs_num_files,
+	.file_name = rofs_file_name
 };

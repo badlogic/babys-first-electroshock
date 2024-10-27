@@ -5,3 +5,4 @@ dependencies.lock
 sdkconfig
 build
 build-desktop
+mcugdx/examples/screaming_cauldron/main/password.h

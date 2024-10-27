@@ -227,6 +227,14 @@ bool rofs_init(void) {
 	return true;
 }
 
+int32_t rofs_num_files(void) {
+	return fs.num_files;
+}
+
+const char *rofs_file_name(int32_t index) {
+	return fs.files[index].name;
+}
+
 bool rofs_exists(const char *path) {
 	for (uint32_t i = 0; i < fs.num_files; i++) {
 		if (strcmp(fs.files[i].name, path) == 0) {

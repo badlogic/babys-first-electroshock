@@ -16,6 +16,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/portmacro.h"
 #include "driver/gpio.h"
 #include <sys/time.h>
 
@@ -27,6 +28,8 @@
 #define ROUNDTRIP 58
 
 #define timeout_expired(start, len) ((uint32_t) (get_time_us() - (start)) >= (len))
+
+static portMUX_TYPE sensor_mux = portMUX_INITIALIZER_UNLOCKED;
 
 static mcugdx_mutex_t mutex;
 static int trigger;
@@ -64,48 +67,58 @@ bool mcugdx_ultrasonic_init(mcugdx_ultrasonic_config_t *config) {
 }
 
 bool mcugdx_ultrasonic_measure(uint32_t max_distance, uint32_t *distance) {
-	if (!distance) {
-		mcugdx_loge(TAG, "No distance argument provided");
-		return false;
-	}
+    if (!distance) {
+        mcugdx_loge(TAG, "No distance argument provided");
+        return false;
+    }
 
-	uint32_t now = mcugdx_time();
-	if (now - last_time < interval) {
-		*distance = last_distance;
-		return true;
-	}
-	last_time = now;
+    uint32_t now = mcugdx_time();
+    if (now - last_time < interval) {
+        *distance = last_distance;
+        return true;
+    }
+    last_time = now;
 
-	gpio_set_level(trigger, 0);
-	esp_rom_delay_us(TRIGGER_LOW_DELAY);
-	gpio_set_level(trigger, 1);
-	esp_rom_delay_us(TRIGGER_HIGH_DELAY);
-	gpio_set_level(trigger, 0);
+    // Critical section starts
+    taskENTER_CRITICAL(&sensor_mux);
 
-	if (gpio_get_level(echo)) {
+    gpio_set_level(trigger, 0);
+    esp_rom_delay_us(TRIGGER_LOW_DELAY);
+    gpio_set_level(trigger, 1);
+    esp_rom_delay_us(TRIGGER_HIGH_DELAY);
+    gpio_set_level(trigger, 0);
+
+    if (gpio_get_level(echo)) {
+        taskEXIT_CRITICAL(&sensor_mux);
 		mcugdx_loge(TAG, "Previous ping hasn't ended");
-		return false;
-	}
+        return false;
+    }
 
-	uint32_t start = get_time_us();
-	while (!gpio_get_level(echo)) {
-		if (timeout_expired(start, PING_TIMEOUT)) {
+    uint32_t start = get_time_us();
+    while (!gpio_get_level(echo)) {
+        if (timeout_expired(start, PING_TIMEOUT)) {
+            taskEXIT_CRITICAL(&sensor_mux);
 			mcugdx_loge(TAG, "No echo received");
-			return false;
-		}
-	}
+            return false;
+        }
+    }
 
-	uint32_t echo_start = get_time_us();
-	uint32_t time = echo_start;
-	uint32_t meas_timeout = echo_start + max_distance * ROUNDTRIP;
-	while (gpio_get_level(echo)) {
-		time = get_time_us();
-		if (timeout_expired(echo_start, meas_timeout)) {
+    uint32_t echo_start = get_time_us();
+    uint32_t time = echo_start;
+    uint32_t meas_timeout = echo_start + max_distance * ROUNDTRIP;
+    while (gpio_get_level(echo)) {
+        time = get_time_us();
+        if (timeout_expired(echo_start, meas_timeout)) {
+            taskEXIT_CRITICAL(&sensor_mux);
 			mcugdx_loge(TAG, "Echo didn't end");
-			return false;
-		}
-	}
+            return false;
+        }
+    }
 
-	*distance = (time - echo_start) / ROUNDTRIP;
-	return true;
+    *distance = (time - echo_start) / ROUNDTRIP;
+
+    // Critical section ends
+    taskEXIT_CRITICAL(&sensor_mux);
+
+    return true;
 }
