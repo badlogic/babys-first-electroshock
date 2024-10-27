@@ -209,14 +209,14 @@ extern "C" void app_main() {
 	initialize_led_offsets();
 
 
-	mcugdx_prefs_init();
-	if (!mcugdx_prefs_read_int("cauldron", "r", &idle_led.r)) {
-		mcugdx_prefs_write_int("cauldron", "r", 0);
-		mcugdx_prefs_write_int("cauldron", "g", 0);
-		mcugdx_prefs_write_int("cauldron", "b", 0);
+	mcugdx_prefs_init("cauldron");
+	if (!mcugdx_prefs_read_int("r", &idle_led.r)) {
+		mcugdx_prefs_write_int("r", 0);
+		mcugdx_prefs_write_int("g", 0);
+		mcugdx_prefs_write_int("b", 0);
 	}
-	mcugdx_prefs_read_int("cauldron", "g", &idle_led.g);
-	mcugdx_prefs_read_int("cauldron", "b", &idle_led.b);
+	mcugdx_prefs_read_int("g", &idle_led.g);
+	mcugdx_prefs_read_int("b", &idle_led.b);
 	mcugdx_button_create(5, 25, MCUGDX_KEY_SPACE);
 #ifdef ESP_PLATFORM
 	adc1_config_width(ADC_WIDTH_BIT_12);
@@ -254,9 +254,9 @@ extern "C" void app_main() {
 				if (event.type == MCUGDX_BUTTON_PRESSED) {
 					mcugdx_log(TAG, "Config button pressed");
 					is_config_mode = false;
-					mcugdx_prefs_write_int("cauldron", "r", idle_led.r);
-					mcugdx_prefs_write_int("cauldron", "g", idle_led.g);
-					mcugdx_prefs_write_int("cauldron", "b", idle_led.b);
+					mcugdx_prefs_write_int("r", idle_led.r);
+					mcugdx_prefs_write_int("g", idle_led.g);
+					mcugdx_prefs_write_int("b", idle_led.b);
 				}
 			}
 
