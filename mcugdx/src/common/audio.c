@@ -290,8 +290,8 @@ void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channel
 		return;
 	}
 
-	// Adjust volume boost (this gives 1.5x boost)
-	int32_t volume_boost = FIXED_POINT_SCALE + (FIXED_POINT_SCALE / 2);
+	// Adjust volume boost (this gives 5x boost)
+	int32_t volume_boost = FIXED_POINT_SCALE * 5.f;
 
 	for (int i = 0; i < MAX_SOUND_INSTANCES; i++) {
 		mcugdx_sound_instance_t *instance = &sound_instances[i];
