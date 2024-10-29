@@ -54,7 +54,7 @@ void config_read(void) {
 	}
 	if (!mcugdx_prefs_read_int("volume", &config.volume)) {
 		mcugdx_loge(TAG, "Couldn't read volume, using default 127");
-		config.volume = 127;
+		config.volume = 255;
 	}
 	mcugdx_mutex_unlock_l(&mutex, __FILE__, __LINE__);
 }

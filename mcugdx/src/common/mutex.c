@@ -37,6 +37,8 @@ void mcugdx_mutex_unlock(mcugdx_mutex_t *mutex) {
 }
 
 void mcugdx_mutex_lock_l(mcugdx_mutex_t *mutex, const char* file, int line) {
+	(void)file;
+	(void)line;
 	// mcugdx_log(TAG, "Locking %p, %s:%i", mutex, file, line);
 #ifdef _WIN32
 	EnterCriticalSection(mutex);
@@ -48,6 +50,8 @@ void mcugdx_mutex_lock_l(mcugdx_mutex_t *mutex, const char* file, int line) {
 }
 
 void mcugdx_mutex_unlock_l(mcugdx_mutex_t *mutex, const char *file, int line) {
+	(void)file;
+	(void)line;
 	// mcugdx_log(TAG, "Unlocking %p, %s:%i", mutex, file, line);
 #ifdef _WIN32
 	LeaveCriticalSection(mutex);

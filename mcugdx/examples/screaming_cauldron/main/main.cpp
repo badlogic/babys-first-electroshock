@@ -5,10 +5,6 @@
 #include "config.h"
 #include "webserver.h"
 
-#ifdef ESP_PLATFORM
-#include "driver/adc.h"
-#endif
-
 #define TAG "Screaming cauldron"
 
 mcugdx_sound_id_t curr_sound = -1;
@@ -28,6 +24,7 @@ LED led_buffer[NUM_LEDS];
 bool current_is_screaming = false;
 float transition_factor = 0.0f;
 bool updating_audio = false;
+bool restart = false;
 
 void cauldron_set_color(int r, int g, int b) {
 	config_t *config = config_lock();
@@ -70,7 +67,7 @@ void apply_buffer() {
 		float r = (led_buffer[i].r > 255 ? 255 : led_buffer[i].r) * brightness;
 		float g = (led_buffer[i].g > 255 ? 255 : led_buffer[i].g) * brightness;
 		float b = (led_buffer[i].b > 255 ? 255 : led_buffer[i].b) * brightness;
-		mcugdx_neopixels_set(i, (int)r, (int)g, (int)b);
+		mcugdx_neopixels_set(i, (int) r, (int) g, (int) b);
 	}
 }
 
@@ -224,63 +221,37 @@ extern "C" void app_main() {
 	if (!mcugdx_neopixels_init(&neopixels_config)) return;
 	initialize_led_offsets();
 
-	mcugdx_button_create(5, 25, MCUGDX_KEY_SPACE);
-	adc1_config_width(ADC_WIDTH_BIT_12);
-	adc1_config_channel_atten(ADC1_CHANNEL_3, ADC_ATTEN_DB_12);
-
+#ifdef ESP_PLATFORM
 	webserver_init();
-
-	bool is_config_mode = false;
-	int32_t r, g, b;
+#endif
 
 	while (true) {
 		if (updating_audio) {
 			int i = 0;
 			while (true) {
-				set_lights(0, i++ % 2 == 0 ? 255: 0, 0);
+				set_lights(0, i++ % 2 == 0 ? 255 : 0, 0);
 				mcugdx_neopixels_show_max_milli_ampere(500);
 				mcugdx_sleep(500);
+
+				if (restart) {
+					mcugdx_sleep(500);
+					mcugdx_quit();
+				}
 			}
 		}
 
-		if (!is_config_mode) {
-			uint32_t distance;
-			if (mcugdx_ultrasonic_measure(20, &distance)) {
-				if (curr_sound == -1 && distance < 10) {
-					mcugdx_log(TAG, "Hand detected, playing sound");
-					curr_sound = mcugdx_sound_play(sounds[sound_index++], 128, 0, MCUGDX_SINGLE_SHOT);
-					if (sound_index >= num_sounds) sound_index = 0;
-				}
+		uint32_t distance;
+		if (mcugdx_ultrasonic_measure(20, &distance)) {
+			if (curr_sound == -1 && distance < 10) {
+				mcugdx_log(TAG, "Hand detected, playing sound");
+				curr_sound = mcugdx_sound_play(sounds[sound_index++], 255, 0, MCUGDX_SINGLE_SHOT);
+				if (sound_index >= num_sounds) sound_index = 0;
 			}
-			curr_sound = mcugdx_sound_is_playing(curr_sound) ? curr_sound : -1;
-
-			update_lights(curr_sound != -1);
-			mcugdx_neopixels_show_max_milli_ampere(600);
-
-			mcugdx_button_event_t event;
-			while (mcugdx_button_get_event(&event)) {
-				if (event.type == MCUGDX_BUTTON_PRESSED) {
-					mcugdx_log(TAG, "Config button pressed");
-					is_config_mode = true;
-				}
-			}
-
-		} else {
-			mcugdx_button_event_t event;
-			while (mcugdx_button_get_event(&event)) {
-				if (event.type == MCUGDX_BUTTON_PRESSED) {
-					mcugdx_log(TAG, "Config button pressed");
-					is_config_mode = false;
-					cauldron_set_color(r, g, b);
-				}
-			}
-
-			adc_to_color(adc1_get_raw(ADC1_CHANNEL_3), r, g, b);
-
-			set_lights(r, g, b);
-			mcugdx_neopixels_show_max_milli_ampere(600);
 		}
+		curr_sound = mcugdx_sound_is_playing(curr_sound) ? curr_sound : -1;
 
+		update_lights(curr_sound != -1);
+		mcugdx_neopixels_show_max_milli_ampere(600);
 		mcugdx_sleep(10);
 	}
 }

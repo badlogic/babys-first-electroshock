@@ -1,12 +1,17 @@
 #include "mcugdx.h"
 #include "stdio.h"
 #include "esp_timer.h"
+#include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #define TAG "MCUGDX"
 
 void mcugdx_init() {
+}
+
+void mcugdx_quit() {
+	esp_restart();
 }
 
 double mcugdx_time() {

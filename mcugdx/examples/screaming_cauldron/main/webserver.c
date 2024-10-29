@@ -193,6 +193,7 @@ static esp_err_t volume_handler(httpd_req_t *req) {
 }
 
 extern bool updating_audio;
+extern bool restart;
 
 esp_err_t audio_handler(httpd_req_t *req) {
     const esp_partition_t *partition = esp_partition_find_first(
@@ -221,7 +222,7 @@ esp_err_t audio_handler(httpd_req_t *req) {
 
 	httpd_resp_sendstr(req, "OK");
 	mcugdx_log(TAG, "Saved Wifi config, restarting");
-	esp_restart();
+	restart = true;
 
     return (received == 0) ? ESP_OK : ESP_FAIL;
 }

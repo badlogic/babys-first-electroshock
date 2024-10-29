@@ -15,7 +15,7 @@ temp_dir=$(mktemp -d)
 for file in "$input_dir"/*.wav; do
     [ -e "$file" ] || continue
     temp_wav="$temp_dir/$(basename "$file")"
-    ffmpeg -y -i "$file" -ar 22050 "$temp_wav"  # Resample to 22kHz
+    ffmpeg -y -i "$file" -ar 22050 -ac 1 "$temp_wav"  # Resample to 22kHz and convert to mono
     mv "$temp_wav" "$file"
     ./qoaconv "$file" "$temp_dir/$(basename "${file%.wav}.qoa")"
 done

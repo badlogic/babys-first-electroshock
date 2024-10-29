@@ -12,6 +12,10 @@ void mcugdx_init(void) {
     mcugdx_start_time = SDL_GetPerformanceCounter();
 }
 
+void mcugdx_quit(void) {
+    exit(0);
+}
+
 extern void app_main(void);
 
 int main(void) {

@@ -9,7 +9,7 @@
 
 #define TAG "mcugdx_audio"
 
-#define BUFFER_SIZE_IN_FRAMES 1024
+#define BUFFER_SIZE_IN_FRAMES 2048
 static uint32_t sample_rate = 0;
 static uint32_t channels = 0;
 static int32_t *buffer;

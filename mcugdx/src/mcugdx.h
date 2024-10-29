@@ -18,6 +18,7 @@ extern "C" {
 #include "prefs.h"
 
 void mcugdx_init(void);
+void mcugdx_quit(void);
 
 #ifdef __cplusplus
 }

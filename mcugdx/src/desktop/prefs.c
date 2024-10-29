@@ -6,6 +6,7 @@
 #define TAG "mcugdx_prefs"
 
 bool mcugdx_prefs_init(const char *collection) {
+    (void)collection;
     mcugdx_loge(TAG, "not implemented");
     return false;
 }
