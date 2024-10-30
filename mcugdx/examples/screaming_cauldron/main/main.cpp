@@ -241,11 +241,13 @@ extern "C" void app_main() {
 		}
 
 		uint32_t distance;
-		if (mcugdx_ultrasonic_measure(20, &distance)) {
-			if (curr_sound == -1 && distance < 10) {
-				mcugdx_log(TAG, "Hand detected, playing sound");
-				curr_sound = mcugdx_sound_play(sounds[sound_index++], 255, 0, MCUGDX_SINGLE_SHOT);
-				if (sound_index >= num_sounds) sound_index = 0;
+		if (curr_sound == -1) {
+			if (mcugdx_ultrasonic_measure(20, &distance)) {
+				if (distance < 10) {
+					mcugdx_log(TAG, "Hand detected, playing sound");
+					curr_sound = mcugdx_sound_play(sounds[sound_index++], 255, 0, MCUGDX_SINGLE_SHOT);
+					if (sound_index >= num_sounds) sound_index = 0;
+				}
 			}
 		}
 		curr_sound = mcugdx_sound_is_playing(curr_sound) ? curr_sound : -1;
