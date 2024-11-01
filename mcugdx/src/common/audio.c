@@ -307,8 +307,6 @@ void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channel
 
 		bool is_streamed = sound->base.type == MCUGDX_STREAMED;
 		uint32_t sound_channels = sound->base.channels;
-		int32_t max_raw_sample = 0;
-		int32_t max_gain_sample = 0;
 		while (frames_to_mix > 0) {
 			uint32_t frames_left_in_sound = sound->base.num_frames - source_position;
 			uint32_t frames_to_process = (frames_to_mix < frames_left_in_sound) ? frames_to_mix : frames_left_in_sound;
@@ -340,16 +338,8 @@ void mcugdx_audio_mix(int32_t *frames, uint32_t num_frames, mcugdx_audio_channel
 					}
 				}
 
-				int32_t l = left_sample < 0 ? -left_sample : left_sample;
-				int32_t r = right_sample < 0 ? -right_sample : right_sample;
-				max_raw_sample = l > r ? l : r;
-
 				left_sample = ((left_sample * pan_left_gain) >> 8) * final_gain >> 8;
 				right_sample = ((right_sample * pan_right_gain) >> 8) * final_gain >> 8;
-
-				l = left_sample < 0 ? -left_sample : left_sample;
-				r = right_sample < 0 ? -right_sample : right_sample;
-				max_gain_sample = l > r ? l : r;
 
 				if (channels == MCUGDX_MONO) {
 					frames[frame] += (left_sample + right_sample) >> 1;

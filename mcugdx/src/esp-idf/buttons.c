@@ -3,7 +3,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "driver/gpio.h"
-#include "esp_log.h"
+#include "log.h"
 #include "esp_timer.h"
 
 #define TAG "mcugdx_button"
@@ -103,6 +103,7 @@ bool mcugdx_button_is_pressed(mcugdx_button_handle_t handle) {
 
 bool mcugdx_button_get_event(mcugdx_button_event_t *event) {
 	if (event_queue == NULL) {
+		mcugdx_loge(TAG, "Event queue is null");
 		return false;
 	}
 	return xQueueReceive(event_queue, event, 0) == pdTRUE;

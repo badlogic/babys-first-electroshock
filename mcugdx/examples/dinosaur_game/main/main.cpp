@@ -428,7 +428,7 @@ extern "C" void app_main() {
 	//mcugdx_sound_play(music, 256, 127, MCUGDX_LOOP);
 
 	escape_key = mcugdx_button_create(12, 25, MCUGDX_KEY_ESCAPE);
-	jump_button = mcugdx_button_create(5, 25, MCUGDX_KEY_SPACE);
+	jump_button = mcugdx_button_create(8, 25, MCUGDX_KEY_SPACE);
 	// speed_plus_button = mcugdx_button_create(4, 25, MCUGDX_KEY_J);
 	// speed_minus_button = mcugdx_button_create(5, 25, MCUGDX_KEY_K);
 
