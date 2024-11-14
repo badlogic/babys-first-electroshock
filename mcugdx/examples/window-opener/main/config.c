@@ -11,6 +11,7 @@ config_t config = {
 		.password = NULL,
 		.min_temp = 16,
 		.max_temp = 19,
+		.offset_temp = 0,
         .manual = false
                 };
 
@@ -39,6 +40,10 @@ void config_read(void) {
 		mcugdx_loge(TAG, "Couldn't read max_temp, using default 19");
 		config.max_temp = 19;
 	}
+	if (!mcugdx_prefs_read_int("offset_temp", &config.offset_temp)) {
+		mcugdx_loge(TAG, "Couldn't read offset_temp, using default 0");
+		config.offset_temp = 0;
+	}
     int32_t manual;
     if (!mcugdx_prefs_read_int("manual", &manual)) {
         mcugdx_loge(TAG, "Couldn't read manual, using default false");
@@ -50,7 +55,7 @@ void config_read(void) {
 
 void config_print(void) {
 	mcugdx_mutex_lock_l(&mutex, __FILE__, __LINE__);
-	mcugdx_log(TAG, "name: %s, ssid: %s, password: %s, min_temp: %li, max_temp: %li, manual: %s", config.device_name ? config.device_name : "null", config.ssid ? config.ssid : "null", config.password ? config.password : "null", config.min_temp, config.max_temp, config.manual ? "true" : "false");
+	mcugdx_log(TAG, "name: %s, ssid: %s, password: %s, min_temp: %li, max_temp: %li, offset_temp: %li, manual: %s", config.device_name ? config.device_name : "null", config.ssid ? config.ssid : "null", config.password ? config.password : "null", config.min_temp, config.max_temp, config.offset_temp, config.manual ? "true" : "false");
 	mcugdx_mutex_unlock_l(&mutex, __FILE__, __LINE__);
 }
 
@@ -72,6 +77,9 @@ void config_save(void) {
 	}
 	if (!mcugdx_prefs_write_int("max_temp", config.max_temp)) {
 		mcugdx_loge(TAG, "Could not save max_temp");
+	}
+	if (!mcugdx_prefs_write_int("offset_temp", config.offset_temp)) {
+		mcugdx_loge(TAG, "Could not save offset_temp");
 	}
     if (!mcugdx_prefs_write_int("manual", config.manual ? -1 : 0)) {
         mcugdx_loge(TAG, "Could not save manual");

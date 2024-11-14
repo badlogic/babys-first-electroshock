@@ -119,6 +119,10 @@
             <label for="maxTemp">Max Temperature:</label>
             <input type="number" id="maxTemp" min="-10" max="40" step="1">
         </div>
+        <div class="temp-control">
+            <label for="minTemp">Offset Temperature:</label>
+            <input type="number" id="offsetTemp" min="-10" max="40" step="1">
+        </div>
     </div>
 
     <div class="section">
@@ -139,6 +143,7 @@
         const saveConfigButton = document.getElementById("saveConfig");
         const minTempInput = document.getElementById("minTemp");
         const maxTempInput = document.getElementById("maxTemp");
+        const offsetTempInput = document.getElementById("offsetTemp");
         const deviceNameInput = document.getElementById("deviceName");
         const ssidInput = document.getElementById("ssid");
         const passwordInput = document.getElementById("password");
@@ -146,7 +151,7 @@
 
         const updateUi = (data) => {
             temperatureSpan.textContent = data.temperature.toFixed(1) + "°C";
-            pressureSpan.textContent = data.pressure.toFixed(0) + " hPa";
+            pressureSpan.textContent = (data.pressure / 100).toFixed(2) + " hPa";
             humiditySpan.textContent = data.humidity.toFixed(0) + "%";
             isClosedSpan.textContent = "Window: " + (data.isClosed ? "closed" : "open");
             stateSpan.textContent = "Motor: " + data.state;
@@ -174,6 +179,7 @@
                 passwordInput.value = config.password ?? "";
                 minTempInput.value = config.minTemp;
                 maxTempInput.value = config.maxTemp;
+                offsetTempInput.value = config.offsetTemp;
                 manualControlCheckbox.checked = config.manual;
                 toggleButton.disabled = !config.manual;
             } catch (error) {
@@ -238,6 +244,7 @@
         saveConfigButton.addEventListener("click", saveConfig);
         minTempInput.addEventListener("change", (e) => updateTemp("min", e.target.value));
         maxTempInput.addEventListener("change", (e) => updateTemp("max", e.target.value));
+        offsetTempInput.addEventListener("change", (e) => updateTemp("offset", e.target.value));
         manualControlCheckbox.addEventListener("change", (e) => updateManualControl(e.target.checked));
 
         // Initial fetches

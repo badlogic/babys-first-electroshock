@@ -6,13 +6,15 @@
 
 #define TAG "Window opener"
 
+double last_measure_time = 0;
+
 extern "C" void app_main(void) {
 	mcugdx_init();
 	mcugdx_button_create(3, 50, MCUGDX_KEY_SPACE);
 	config_read();
 	config_print();
 	motor_init(4, 5);
-	bme280_init(1, 2);
+	bme280_init(2, 1);
 
 	mcugdx_neopixels_config_t neopixels_config = {
 			.num_leds = 1,
@@ -29,6 +31,7 @@ extern "C" void app_main(void) {
 		bool manual = config->manual;
 		int32_t min_temp = config->min_temp;
 		int32_t max_temp = config->max_temp;
+		int32_t offset_temp = config->offset_temp;
 		while (mcugdx_button_get_event(&event)) {
 			if (event.type == MCUGDX_BUTTON_PRESSED) {
 				mcugdx_log(TAG, "Button pressed");
@@ -40,9 +43,12 @@ extern "C" void app_main(void) {
 			}
 		}
 		config_unlock();
-
-		bme280_update();
-		float temp = bme280_temperature();
+		double time = mcugdx_time();
+		if (time - last_measure_time > 1) {
+			bme280_update();
+			last_measure_time = time;
+		}
+		float temp = bme280_temperature() + offset_temp;
 
 		if (!manual) {
 			if (temp < (float) min_temp && !motor_is_closed()) {

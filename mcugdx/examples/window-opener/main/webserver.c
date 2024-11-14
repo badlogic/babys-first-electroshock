@@ -122,12 +122,12 @@ static esp_err_t state_handler(httpd_req_t *req) {
 	}
 
 	cJSON *json = cJSON_CreateObject();
+	config_t *config = config_lock();
 	cJSON_AddBoolToObject(json, "isClosed", is_closed);
 	cJSON_AddStringToObject(json, "state", state_str);
-	cJSON_AddNumberToObject(json, "temperature", bme280_temperature());
-	cJSON_AddNumberToObject(json, "pressure", bme280_temperature());
+	cJSON_AddNumberToObject(json, "temperature", bme280_temperature() + config->offset_temp);
+	cJSON_AddNumberToObject(json, "pressure", bme280_pressure());
 	cJSON_AddNumberToObject(json, "humidity", bme280_humidity());
-	config_t *config = config_lock();
 	cJSON_AddBoolToObject(json, "manual", config->manual);
 	config_unlock();
 	char *json_string = cJSON_Print(json);
@@ -145,6 +145,7 @@ static esp_err_t config_get_handler(httpd_req_t *req) {
 	cJSON_AddStringToObject(json, "password", config->password);
 	cJSON_AddNumberToObject(json, "minTemp", config->min_temp);
 	cJSON_AddNumberToObject(json, "maxTemp", config->max_temp);
+	cJSON_AddNumberToObject(json, "offsetTemp", config->offset_temp);
 	cJSON_AddBoolToObject(json, "manual", config->manual);
 	char *json_string = cJSON_Print(json);
 	httpd_resp_send(req, json_string, strlen(json_string));
@@ -252,6 +253,39 @@ static esp_err_t max_temp_handler(httpd_req_t *req) {
 				config_unlock();
 				config_save();
 				httpd_resp_sendstr(req, "Minimum temperature updated successfully");
+				ret = ESP_OK;
+			} else {
+				mcugdx_loge(TAG, "Invalid query string");
+				httpd_resp_send_500(req);
+			}
+		} else {
+			mcugdx_loge(TAG, "Failed to get query string");
+			httpd_resp_send_500(req);
+		}
+		free(buf);
+	} else {
+		mcugdx_loge(TAG, "Query string too short");
+		httpd_resp_send_500(req);
+	}
+
+	return ret;
+}
+
+static esp_err_t offset_temp_handler(httpd_req_t *req) {
+	esp_err_t ret = ESP_FAIL;
+
+	size_t buf_len = httpd_req_get_url_query_len(req) + 1;
+	if (buf_len > 1) {
+		char *buf = malloc(buf_len);
+		if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
+			char param[32];
+			if (httpd_query_key_value(buf, "value", param, sizeof(param)) == ESP_OK) {
+				float new_offset_temp = atof(param);
+				config_t *config = config_lock();
+				config->offset_temp = new_offset_temp;
+				config_unlock();
+				config_save();
+				httpd_resp_sendstr(req, "Offset temperature updated successfully");
 				ret = ESP_OK;
 			} else {
 				mcugdx_loge(TAG, "Invalid query string");
@@ -383,6 +417,7 @@ void webserver_init(void) {
 
 	httpd_handle_t server = NULL;
 	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+	config.max_uri_handlers = 20;
 
 	ret = httpd_start(&server, &config);
 	if (ret == ESP_OK) {
@@ -434,6 +469,13 @@ void webserver_init(void) {
 				.handler = max_temp_handler,
 				.user_ctx = NULL};
 		httpd_register_uri_handler(server, &max_temp);
+
+		httpd_uri_t offset_temp = {
+				.uri = "/offset_temp",
+				.method = HTTP_POST,
+				.handler = offset_temp_handler,
+				.user_ctx = NULL};
+		httpd_register_uri_handler(server, &offset_temp);
 
 		httpd_uri_t manual = {
 				.uri = "/manual",

@@ -13,6 +13,7 @@ typedef struct {
     char *password;
     int32_t min_temp;
     int32_t max_temp;
+    int32_t offset_temp;
     bool manual;
 } config_t;
 
