@@ -16,6 +16,7 @@ extern "C" {
 #include "buttons.h"
 #include "time.h"
 #include "prefs.h"
+#include "gpio.h"
 
 void mcugdx_init(void);
 void mcugdx_quit(void);

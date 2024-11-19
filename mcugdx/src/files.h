@@ -17,7 +17,7 @@ typedef void (*mcugdx_fs_close_func_t)(mcugdx_file_handle_t);
 typedef uint32_t (*mcugdx_fs_length_func_t)(mcugdx_file_handle_t handle);
 typedef uint32_t (*mcugdx_fs_read_func_t)(mcugdx_file_handle_t handle, uint32_t offset, uint8_t *buffer, uint32_t buffer_len);
 typedef uint8_t *(*mcugdx_fs_read_fully_func_t)(const char *path, uint32_t *size, mcugdx_memory_type_t mem_type);
-typedef int (*mcugdx_fs_num_files_func_t)(void);
+typedef int32_t (*mcugdx_fs_num_files_func_t)(void);
 typedef const char *(*mcugdx_fs_get_file_name_func_t)(int32_t index);
 
 typedef struct {
